@@ -1,0 +1,8 @@
+{
+    "name": "SzechID Version 2 CloudStream Repo(Unofficial Hexated)",
+    "description": "Plugin Untuk Situs Indonesia",
+    "manifestVersion": 1,
+    "pluginLists": [
+        "https://raw.githubusercontent.com/szechnaya/SzechID2/builds/plugins.json"
+    ]
+}
