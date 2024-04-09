@@ -114,7 +114,7 @@ class AnimeIndoProvider : MainAPI() {
     override suspend fun search(query: String): List<SearchResponse> {
         val anime = mutableListOf<SearchResponse>()
         (1..2).forEach { page ->
-            val document = app.get("$mainUrl/search/$query/?page=$page").document
+            val document = app.get("$mainUrl/search/$query?page=$page").document
             val media = document.select(".site-main.relat > article").mapNotNull {
                 val title = it.selectFirst("div.title > h2")!!.ownText().trim()
                 val href = it.selectFirst("a")!!.attr("href")
