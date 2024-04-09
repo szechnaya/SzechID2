@@ -56,11 +56,11 @@ class AnimeIndoProvider : MainAPI() {
         return newHomePageResponse(request.name, home)
     }
 
-    private fun getProperAnimeLink(uri: String): String {
-        return if (uri.contains("/tv-show/")) {
+    /*private fun getProperAnimeLink(uri: String): String {
+        return if (uri.contains("/anime/")) {
             uri
         } else {
-            var title = uri.substringAfter("$mainUrl/")
+            var title = uri.substringAfter("$mainUrl/tv-show/")
             title = when {
                 (title.contains("episode")) && !(title.contains("movie")) -> title.substringBefore(
                     "episode"
@@ -72,7 +72,31 @@ class AnimeIndoProvider : MainAPI() {
 
             "$mainUrl/tv-show/$title"
         }
+    }*/
+    private fun getProperAnimeLink(uri: String): String {
+    return if (uri.contains("/tv-show/")) {
+        uri
+    } else {
+        var title = when {
+            uri.contains("$mainUrl/episode/") -> uri.substringAfter("$mainUrl/episode/")
+            uri.contains("$mainUrl/movie/") -> uri.substringAfter("$mainUrl/movie/")
+            else -> ""
+        }
+        
+        // Ambil bagian episode atau movie terakhir
+        val episode = uri.substringAfterLast("/")
+        
+        // Buat tautan sesuai format
+        if (uri.contains("$mainUrl/episode/")) {
+            "$mainUrl/episode/$title/${episode}"
+        } else if (uri.contains("$mainUrl/movie/")) {
+            "$mainUrl/movie/$title/${episode}"
+        } else {
+            "$mainUrl/tv-show/$title"
+        }
     }
+}
+
 
     private fun Element.toSearchResult(): AnimeSearchResponse {
         val title = this.selectFirst("div.title, h2.entry-title, h4")?.text()?.trim() ?: ""
