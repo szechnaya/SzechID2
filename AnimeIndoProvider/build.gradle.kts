@@ -1,12 +1,12 @@
 // use an integer for version numbers
-version = 19
+version = 16
 
 
 cloudstream {
     language = "id"
     // All of these properties are optional, you can safely remove them
 
-    description = "Ajg Emang"
+    description = "Disabled"
      authors = listOf("Szechnaya ID")
 
     /**
@@ -16,12 +16,12 @@ cloudstream {
      * 2: Slow
      * 3: Beta only
      * */
-    status = 1 // will be 3 if unspecified
+    status = 0 // will be 3 if unspecified
     tvTypes = listOf(
         "AnimeMovie",
         "OVA",
         "Anime",
     )
 
-    iconUrl = "https://animeindo.quest/wp-content/uploads/2023/05/favicon-300x300.png"
+    iconUrl = "https://animeindo.skin/favicon/favicon-32x32.png"
 }
