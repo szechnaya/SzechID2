@@ -42,14 +42,14 @@ class AnimeIndoProvider : MainAPI() {
         "episode-terbaru" to "Episode Terbaru",
         "tv-shows" to "Anime Ongoing",
         "trending" to "Anime Populer",
-        "movie" to "Movie Terbaru",
+        "movies" to "Movie Terbaru",
     )
 
     override suspend fun getMainPage(
         page: Int,
         request: MainPageRequest
     ): HomePageResponse {
-        val document = app.get("$mainUrl/${request.data}/page/$page").document
+        val document = app.get("$mainUrl/${request.data}?page=$page").document
         val home = document.select("main#main div.animposx").mapNotNull {
             it.toSearchResult()
         }
@@ -57,20 +57,20 @@ class AnimeIndoProvider : MainAPI() {
     }
 
     private fun getProperAnimeLink(uri: String): String {
-        return if (uri.contains("/anime/")) {
+        return if (uri.contains("/tv-show/")) {
             uri
         } else {
             var title = uri.substringAfter("$mainUrl/")
             title = when {
-                (title.contains("-episode")) && !(title.contains("-movie")) -> title.substringBefore(
-                    "-episode"
+                (title.contains("episode")) && !(title.contains("movie")) -> title.substringBefore(
+                    "episode"
                 )
 
-                (title.contains("-movie")) -> title.substringBefore("-movie")
+                (title.contains("movie")) -> title.substringBefore("movie")
                 else -> title
             }
 
-            "$mainUrl/anime/$title"
+            "$mainUrl/tv-show/$title"
         }
     }
 
@@ -90,7 +90,7 @@ class AnimeIndoProvider : MainAPI() {
     override suspend fun search(query: String): List<SearchResponse> {
         val anime = mutableListOf<SearchResponse>()
         (1..2).forEach { page ->
-            val document = app.get("$mainUrl/page/$page/?s=$query").document
+            val document = app.get("$mainUrl/search/$query/?page=$page").document
             val media = document.select(".site-main.relat > article").mapNotNull {
                 val title = it.selectFirst("div.title > h2")!!.ownText().trim()
                 val href = it.selectFirst("a")!!.attr("href")
