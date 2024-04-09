@@ -40,9 +40,9 @@ class AnimeIndoProvider : MainAPI() {
 
     override val mainPage = mainPageOf(
         "episode-terbaru" to "Episode Terbaru",
-        "ongoing" to "Anime Ongoing",
-        "populer" to "Anime Populer",
-        "donghua-terbaru" to "Donghua Terbaru",
+        "tv-shows" to "Anime Ongoing",
+        "trending" to "Anime Populer",
+        "movie" to "Movie Terbaru",
     )
 
     override suspend fun getMainPage(
