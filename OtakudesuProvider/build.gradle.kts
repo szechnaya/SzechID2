@@ -1,12 +1,12 @@
 // use an integer for version numbers
-version = 16
+version = 17
 
 
 cloudstream {
     language = "id"
     // All of these properties are optional, you can safely remove them
 
-    description = "Test Fix"
+    description = "Update Url"
     authors = listOf("Szechnaya ID")
 
     /**
@@ -23,5 +23,5 @@ cloudstream {
         "OVA",
     )
 
-    iconUrl = "https://www.google.com/s2/favicons?domain=otakudesu.watch&sz=%size%"
+    iconUrl = "https://www.google.com/s2/favicons?domain=otakudesu.best&sz=%size%"
 }
