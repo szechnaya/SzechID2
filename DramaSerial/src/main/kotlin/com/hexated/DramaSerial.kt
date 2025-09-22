@@ -97,7 +97,7 @@ class DramaSerial : MainAPI() {
                     } else {
                         eps.parent()?.attr("href")
                     }
-                    Episode(
+                    newEpisode(
                         link ?: return@mapNotNull null,
                         episode = episode,
                     )
@@ -154,7 +154,7 @@ class DramaSerial : MainAPI() {
         val token = req.document.selectFirst("div#token")?.text() ?: return
 
         callback.invoke(
-            ExtractorLink(
+            newExtractorLink(
                 name,
                 name,
                 "$host/hlsplaylist.php?idhls=${token.trim()}.m3u8",

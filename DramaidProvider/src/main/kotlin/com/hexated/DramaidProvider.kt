@@ -93,7 +93,7 @@ open class DramaidProvider : MainAPI() {
         val episodes = document.select(".eplister > ul > li").mapNotNull {
             val name = it.selectFirst("a > .epl-title")?.text()
             val link = fixUrl(it.selectFirst("a")?.attr("href") ?: return@mapNotNull null)
-            Episode(
+            newEpisode(
                 link,
                 name,
             )
@@ -151,7 +151,7 @@ open class DramaidProvider : MainAPI() {
 
         tryParseJson<List<Sources>>(source)?.map {
             sourceCallback(
-                ExtractorLink(
+                newExtractorLink(
                     name,
                     "Drive",
                     fixUrl(it.file),

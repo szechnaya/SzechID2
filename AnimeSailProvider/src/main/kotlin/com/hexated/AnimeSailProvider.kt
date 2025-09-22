@@ -117,7 +117,7 @@ class AnimeSailProvider : MainAPI() {
             val link = fixUrl(it.select("a").attr("href"))
             val name = it.select("a").text()
             val episode = Regex("Episode\\s?(\\d+)").find(name)?.groupValues?.getOrNull(0)?.toIntOrNull()
-            Episode(link, episode = episode)
+            newEpisode(link, episode = episode)
         }.reversed()
 
         val tracker = APIHolder.getTracker(listOf(title),TrackerType.getTypes(type),year,true)
@@ -165,7 +165,7 @@ class AnimeSailProvider : MainAPI() {
                                     else -> this.name
                                 }
                             callback.invoke(
-                                ExtractorLink(
+                                newExtractorLink(
                                     source = source,
                                     name = source,
                                     url = link,
@@ -208,7 +208,7 @@ class AnimeSailProvider : MainAPI() {
     ) {
         loadExtractor(url, referer, subtitleCallback) { link ->
             callback.invoke(
-                ExtractorLink(
+                newExtractorLink(
                     link.name,
                     link.name,
                     link.url,

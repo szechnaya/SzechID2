@@ -105,11 +105,13 @@ class Animasu : MainAPI() {
         val year = table?.selectFirst("span:contains(Rilis:)")?.ownText()?.substringAfterLast(",")?.trim()?.toIntOrNull()
         val status = table?.selectFirst("span:contains(Status:) font")?.text()
         val trailer = document.selectFirst("div.trailer iframe")?.attr("src")
+        
         val episodes = document.select("ul#daftarepisode > li").map {
             val link = fixUrl(it.selectFirst("a")!!.attr("href"))
             val name = it.selectFirst("a")?.text() ?: ""
             val episode = Regex("Episode\\s?(\\d+)").find(name)?.groupValues?.getOrNull(0)?.toIntOrNull()
-            Episode(link, episode = episode)
+            // ✅ PERBAIKAN: Menggunakan newEpisode() sebagai pengganti konstruktor yang usang
+            newEpisode(link, episode = episode)
         }.reversed()
 
         val tracker = APIHolder.getTracker(listOf(title),TrackerType.getTypes(type),year,true)
@@ -151,8 +153,9 @@ class Animasu : MainAPI() {
         callback: (ExtractorLink) -> Unit
     ) {
         loadExtractor(url, referer, subtitleCallback) { link ->
+            // ✅ PERBAIKAN: Menggunakan newExtractorLink() sebagai pengganti konstruktor yang usang
             callback.invoke(
-                ExtractorLink(
+                newExtractorLink(
                     link.name,
                     link.name,
                     link.url,

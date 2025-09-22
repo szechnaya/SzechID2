@@ -148,7 +148,7 @@ class AnimeIndoProvider : MainAPI() {
             val header = it.selectFirst("span.lchx > a") ?: return@mapNotNull null
             val episode = header.text().trim().replace("Episode", "").trim().toIntOrNull()
             val link = fixUrl(header.attr("href"))
-            Episode(link, episode = episode)
+            newEpisode(link, episode = episode)
         }.reversed()
 
         val recommendations = document.select("div.relat div.animposx").mapNotNull {
