@@ -30,10 +30,10 @@ open class Mitedrive : ExtractorApi() {
                 this.name,
                 this.name,
                 video ?: return,
-                "$mainUrl/",
-                Qualities.Unknown.value,
                 INFER_TYPE,
-            )
+            ) {
+                this.referer = "$mainUrl/"
+            }
         )
 
     }
@@ -67,10 +67,10 @@ open class Berkasdrive : ExtractorApi() {
                 this.name,
                 this.name,
                 video,
-                "$mainUrl/",
-                Qualities.Unknown.value,
                 INFER_TYPE
-            )
+            ) {
+                this.referer = "$mainUrl/"
+            }
         )
 
     }

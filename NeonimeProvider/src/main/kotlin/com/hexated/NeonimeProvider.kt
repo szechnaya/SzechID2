@@ -144,7 +144,7 @@ class NeonimeProvider : MainAPI() {
                 val link = fixUrl(it.selectFirst(".episodiotitle > a")!!.attr("href"))
                 val name = it.selectFirst(".episodiotitle > a")?.ownText().toString()
                 val episode = Regex("(\\d+[.,]?\\d*)").find(name)?.groupValues?.getOrNull(0)?.toIntOrNull()
-                newEpisode(link, episode = episode)
+                newEpisode(link) {this.episode = episode}
             }.reversed()
             val tracker = APIHolder.getTracker(listOf(title),TrackerType.getTypes(TvType.Anime),year,true)
             return newAnimeLoadResponse(title, url, TvType.Anime) {

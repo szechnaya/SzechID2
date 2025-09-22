@@ -4,16 +4,19 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import com.lagradost.cloudstream3.*
 import com.lagradost.cloudstream3.LoadResponse.Companion.addAniListId
 import com.lagradost.cloudstream3.LoadResponse.Companion.addMalId
+import com.lagradost.cloudstream3.extractors.Filesim
 import com.lagradost.cloudstream3.extractors.JWPlayer
 import com.lagradost.cloudstream3.utils.AppUtils.tryParseJson
 import com.lagradost.cloudstream3.utils.ExtractorLink
 import com.lagradost.cloudstream3.utils.Qualities
 import com.lagradost.cloudstream3.utils.loadExtractor
+import com.lagradost.cloudstream3.utils.newExtractorLink
+import kotlinx.coroutines.runBlocking
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Element
 
 class OtakudesuProvider : MainAPI() {
-    override var mainUrl = "https://otakudesu.best"
+    override var mainUrl = "https://otakudesu.cloud"
     override var name = "Otakudesu"
     override val hasMainPage = true
     override var lang = "id"
@@ -32,6 +35,7 @@ class OtakudesuProvider : MainAPI() {
             "MegaUp",
             "Otakufiles",
         )
+
         fun getType(t: String): TvType {
             return if (t.contains("OVA", true) || t.contains("Special")) TvType.OVA
             else if (t.contains("Movie", true)) TvType.AnimeMovie
@@ -96,8 +100,10 @@ class OtakudesuProvider : MainAPI() {
             ?.replace(":", "")?.trim().toString()
         val poster = document.selectFirst("div.fotoanime > img")?.attr("src")
         val tags = document.select("div.infozingle > p:nth-child(11) > span > a").map { it.text() }
-        val type = getType(document.selectFirst("div.infozingle > p:nth-child(5) > span")?.ownText()
-            ?.replace(":", "")?.trim() ?: "tv")
+        val type = getType(
+            document.selectFirst("div.infozingle > p:nth-child(5) > span")?.ownText()
+                ?.replace(":", "")?.trim() ?: "tv"
+        )
 
         val year = Regex("\\d, (\\d*)").find(
             document.select("div.infozingle > p:nth-child(9) > span").text()
@@ -114,7 +120,7 @@ class OtakudesuProvider : MainAPI() {
             val episode = Regex("Episode\\s?(\\d+)").find(name)?.groupValues?.getOrNull(0)
                 ?: it.selectFirst("a")?.text()
             val link = fixUrl(it.selectFirst("a")!!.attr("href"))
-            newEpisode(link, episode = episode?.toIntOrNull())
+            newEpisode(link) { this.episode = episode?.toIntOrNull() }
         }.reversed()
 
         val recommendations =
@@ -127,7 +133,7 @@ class OtakudesuProvider : MainAPI() {
                 }
             }
 
-        val tracker = APIHolder.getTracker(listOf(title),TrackerType.getTypes(type),year,true)
+        val tracker = APIHolder.getTracker(listOf(title), TrackerType.getTypes(type), year, true)
 
         return newAnimeLoadResponse(title, url, type) {
             engName = title
@@ -236,18 +242,21 @@ class OtakudesuProvider : MainAPI() {
         quality: Int = Qualities.Unknown.value,
     ) {
         loadExtractor(url, referer, subtitleCallback) { link ->
-            callback.invoke(
-                newExtractorLink(
-                    link.name,
-                    link.name,
-                    link.url,
-                    link.referer,
-                    quality,
-                    link.type,
-                    link.headers,
-                    link.extractorData
+            runBlocking {
+                callback.invoke(
+                    newExtractorLink(
+                        link.name,
+                        link.name,
+                        link.url,
+                        link.type
+                    ) {
+                        this.referer = link.referer
+                        this.quality = quality
+                        this.headers = link.headers
+                        this.extractorData = link.extractorData
+                    }
                 )
-            )
+            }
         }
     }
 
@@ -286,4 +295,9 @@ class DesuBeta : JWPlayer() {
 class Desudesuhd : JWPlayer() {
     override val name = "Desudesuhd"
     override val mainUrl = "https://desustream.me/desudesuhd/"
+}
+
+class Odvidhide : Filesim() {
+    override val name = "Odvidhide"
+    override var mainUrl = "https://odvidhide.com"
 }

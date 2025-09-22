@@ -1,5 +1,5 @@
 // use an integer for version numbers
-version = 10
+version = 11
 
 
 cloudstream {
@@ -7,7 +7,7 @@ cloudstream {
     // All of these properties are optional, you can safely remove them
 
     // description = "Lorem Ipsum"
-     authors = listOf("Szechnaya ID")
+     authors = listOf("Hexated")
 
     /**
      * Status int as the following:
@@ -24,7 +24,4 @@ cloudstream {
     )
 
     iconUrl = "https://aghanim.xyz/wp-content/themes/animesail/assets/images/ico.png"
-}
-android {
-    namespace = "com.hexated"
 }

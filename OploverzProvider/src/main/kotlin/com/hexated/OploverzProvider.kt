@@ -4,10 +4,12 @@ import com.lagradost.cloudstream3.*
 import com.lagradost.cloudstream3.LoadResponse.Companion.addAniListId
 import com.lagradost.cloudstream3.LoadResponse.Companion.addMalId
 import com.lagradost.cloudstream3.utils.*
+import kotlinx.coroutines.runBlocking
+import org.jsoup.Jsoup
 import org.jsoup.nodes.Element
 
 class OploverzProvider : MainAPI() {
-    override var mainUrl = "https://oploverz.gold"
+    override var mainUrl = "https://oploverz.media"
     override var name = "Oploverz"
     override val hasMainPage = true
     override var lang = "id"
@@ -39,7 +41,7 @@ class OploverzProvider : MainAPI() {
     }
 
     override val mainPage = mainPageOf(
-        "update" to "Latest Update",
+        "" to "Latest Update",
         "latest" to "Latest Added",
         "popular" to "Popular Anime",
         "rating" to "Top Rated",
@@ -49,44 +51,34 @@ class OploverzProvider : MainAPI() {
         page: Int,
         request: MainPageRequest
     ): HomePageResponse {
-        val document = app.get("$mainUrl/anime-list/page/$page/?title&order=${request.data}&status&type").document
-        val home = document.select("div.relat > article").mapNotNull {
-            it.toSearchResult()
-        }
+        val url =
+            if (request.data.isEmpty()) "$mainUrl/page/$page/" else "$mainUrl/anime/?page=$page&status=&type=&order=${request.data}"
+        val document = app.get(url).document
+        val home = document.select("div.listupd > article, div.listupd.normal div.excstf > article")
+            .mapNotNull {
+                it.toSearchResult()
+            }
         return newHomePageResponse(request.name, home)
     }
 
-    private fun getProperAnimeLink(uri: String): String {
+    private suspend fun getProperAnimeLink(uri: String): String? {
         return if (uri.contains("/anime/")) {
             uri
         } else {
-            var title = uri.substringAfter("$mainUrl/")
-            title = when {
-                (title.contains("-episode")) && !(title.contains("-movie")) -> Regex("(.+)-episode").find(
-                    title
-                )?.groupValues?.get(1).toString()
-                (title.contains("-movie")) -> Regex("(.+)-movie").find(title)?.groupValues?.get(
-                    1
-                ).toString()
-                else -> title
-            }
-            "$mainUrl/anime/$title"
+            app.get(uri).document.selectFirst("a[itemprop=item][href*=/anime/]")?.attr("href")
         }
     }
 
-    private fun Element.toSearchResult(): AnimeSearchResponse? {
-        val title = this.selectFirst("div.title")?.text()?.trim() ?: return null
-        val href = getProperAnimeLink(this.selectFirst("a")!!.attr("href"))
-        val posterUrl = this.select("img[itemprop=image]").attr("src").toString()
-        val type = getType(this.select("div.type").text().trim())
+    private fun Element.toSearchResult(): AnimeSearchResponse {
+        val href = fixUrlNull(this.selectFirst("a")?.attr("href")).toString()
+        val title = this.select("div.tt").text().trim()
+        val posterUrl = fixUrlNull(this.selectFirst("img")?.getImageAttr())
         val epNum =
-            this.selectFirst("span.episode")?.ownText()?.replace(Regex("\\D"), "")?.trim()
-                ?.toIntOrNull()
-        return newAnimeSearchResponse(title, href, type) {
+            this.selectFirst("div.eggepisode")?.text()?.filter { it.isDigit() }?.toIntOrNull()
+        return newAnimeSearchResponse(title, href, TvType.Anime) {
             this.posterUrl = posterUrl
             addSub(epNum)
         }
-
     }
 
     override suspend fun search(query: String): List<SearchResponse> {
@@ -94,35 +86,34 @@ class OploverzProvider : MainAPI() {
         (1..2).forEach { page ->
             val link = "$mainUrl/page/$page/?s=$query"
             val document = app.get(link).document
-            val media = document.select(".site-main.relat > article").mapNotNull {
-                val title = it.selectFirst("div.title > h2")!!.ownText().trim()
-                val href = it.selectFirst("a")!!.attr("href")
-                val posterUrl = it.selectFirst("img")!!.attr("src").toString()
-                val type = getType(it.select("div.type").text().trim())
-                newAnimeSearchResponse(title, href, type) {
-                    this.posterUrl = posterUrl
-                }
+            val media = document.select("div.listupd > article").mapNotNull {
+                it.toSearchResult()
             }
-            if(media.isNotEmpty()) anime.addAll(media)
+            if (media.isNotEmpty()) anime.addAll(media)
         }
         return anime
     }
 
     override suspend fun load(url: String): LoadResponse {
-        val document = app.get(url).document
+        val fixUrl = getProperAnimeLink(url) ?: throw ErrorLoadingException("Could not load")
+        val document = app.get(fixUrl).document
 
         val title = document.selectFirst("h1.entry-title")?.text()
             ?.replace("Subtitle Indonesia", "")?.trim() ?: ""
-        val type = getType(document.selectFirst("div.alternati span.type")?.text() ?: "")
-        val year = document.selectFirst("div.alternati a")?.text()?.filter { it.isDigit() }?.toIntOrNull()
-        val episodes = document.select("div.lstepsiode.listeps ul li").mapNotNull {
+        val type = getType(
+            document.selectFirst("div.info-content span:contains(Type:)")?.text()
+                ?.substringAfter(":")?.trim() ?: "TV"
+        )
+        val year =
+            document.selectFirst("div.alternati a")?.text()?.filter { it.isDigit() }?.toIntOrNull()
+        val episodes = document.select("div.eplister ul li").mapNotNull {
             val header = it.selectFirst("a") ?: return@mapNotNull null
-            val episode = header.text().trim().toIntOrNull()
+            val episode = it.select("div.epl-num").text().toIntOrNull()
             val link = fixUrl(header.attr("href"))
-            newEpisode(link, episode = episode)
+            newEpisode(link) { this.episode = episode }
         }.reversed()
 
-        val tracker = APIHolder.getTracker(listOf(title),TrackerType.getTypes(type),year,true)
+        val tracker = APIHolder.getTracker(listOf(title), TrackerType.getTypes(type), year, true)
 
         return newAnimeLoadResponse(title, url, type) {
             posterUrl = tracker?.image ?: document.selectFirst("div.thumb > img")?.attr("src")
@@ -152,31 +143,23 @@ class OploverzProvider : MainAPI() {
 
         argamap(
             {
-                document.select("div#server ul li div").apmap {
-                    val dataPost = it.attr("data-post")
-                    val dataNume = it.attr("data-nume")
-                    val dataType = it.attr("data-type")
-
-                    val iframe = app.post(
-                        url = "$mainUrl/wp-admin/admin-ajax.php",
-                        data = mapOf(
-                            "action" to "player_ajax",
-                            "post" to dataPost,
-                            "nume" to dataNume,
-                            "type" to dataType
-                        ),
-                        referer = data,
-                        headers = mapOf("X-Requested-With" to "XMLHttpRequest")
-                    ).document.select("iframe").attr("src")
-
+                document.select(".mobius > .mirror > option").apmap {
+                    val iframe = fixUrl(
+                        Jsoup.parse(base64Decode(it.attr("value"))).select("iframe").attr("src")
+                    )
                     loadExtractor(fixUrl(iframe), "$mainUrl/", subtitleCallback, callback)
-
                 }
             },
             {
-                document.select("div#download tr").apmap { el ->
+                document.select("div.soraurlx").apmap { el ->
                     el.select("a").apmap {
-                        loadFixedExtractor(fixUrl(it.attr("href")), el.select("strong").text(), "$mainUrl/", subtitleCallback, callback)
+                        loadFixedExtractor(
+                            fixUrl(it.attr("href")),
+                            "$mainUrl/",
+                            el.select("strong").text(),
+                            subtitleCallback,
+                            callback
+                        )
                     }
                 }
             }
@@ -187,32 +170,46 @@ class OploverzProvider : MainAPI() {
 
     private suspend fun loadFixedExtractor(
         url: String,
-        name: String,
         referer: String? = null,
+        quality: String,
         subtitleCallback: (SubtitleFile) -> Unit,
         callback: (ExtractorLink) -> Unit
     ) {
         loadExtractor(url, referer, subtitleCallback) { link ->
-            callback.invoke(
-                newExtractorLink(
-                    link.name,
-                    link.name,
-                    link.url,
-                    link.referer,
-                    name.fixQuality(),
-                    link.type,
-                    link.headers,
-                    link.extractorData
+            runBlocking {
+                callback.invoke(
+                    newExtractorLink(
+                        link.name,
+                        link.name,
+                        link.url,
+                        link.type
+                    ) {
+                        this.referer = link.referer
+                        this.quality =
+                            if (link.type == ExtractorLinkType.M3U8) link.quality else quality.fixQuality()
+                        this.headers = link.headers
+                        this.extractorData = link.extractorData
+                    }
                 )
-            )
+            }
         }
     }
 
-    private fun String.fixQuality() : Int {
-        return when(this) {
+    private fun String.fixQuality(): Int {
+        return when (this) {
             "MP4HD" -> Qualities.P720.value
             "FULLHD" -> Qualities.P1080.value
-            else -> Regex("(\\d{3,4})p").find(this)?.groupValues?.get(1)?.toIntOrNull() ?: Qualities.Unknown.value
+            else -> Regex("(\\d{3,4})p").find(this)?.groupValues?.get(1)?.toIntOrNull()
+                ?: Qualities.Unknown.value
+        }
+    }
+
+    private fun Element.getImageAttr(): String? {
+        return when {
+            this.hasAttr("data-src") -> this.attr("abs:data-src")
+            this.hasAttr("data-lazy-src") -> this.attr("abs:data-lazy-src")
+            this.hasAttr("srcset") -> this.attr("abs:srcset").substringBefore(" ")
+            else -> this.attr("abs:src")
         }
     }
 

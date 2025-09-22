@@ -6,8 +6,8 @@ cloudstream {
     language = "id"
     // All of these properties are optional, you can safely remove them
 
-    description = "Update Url"
-    authors = listOf("Szechnaya ID")
+    // description = "Lorem Ipsum"
+    authors = listOf("Hexated")
 
     /**
      * Status int as the following:
@@ -23,9 +23,5 @@ cloudstream {
         "OVA",
     )
 
-    iconUrl = "https://www.google.com/s2/favicons?domain=otakudesu.best&sz=%size%"
-}
-
-android {
-    namespace = "com.hexated"
+    iconUrl = "https://www.google.com/s2/favicons?domain=otakudesu.watch&sz=%size%"
 }

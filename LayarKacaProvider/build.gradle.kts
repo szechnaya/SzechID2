@@ -1,5 +1,5 @@
 // use an integer for version numbers
-version = 20
+version = 21
 
 
 cloudstream {
@@ -7,7 +7,7 @@ cloudstream {
     // All of these properties are optional, you can safely remove them
 
     // description = "Lorem Ipsum"
-    authors = listOf("Szechnaya ID")
+    authors = listOf("Hexated")
 
     /**
      * Status int as the following:
@@ -26,8 +26,4 @@ cloudstream {
 
     iconUrl = "https://www.google.com/s2/favicons?domain=amp.lk21official.mom&sz=%size%"
 
-}
-
-android {
-    namespace = "com.hexated"
 }

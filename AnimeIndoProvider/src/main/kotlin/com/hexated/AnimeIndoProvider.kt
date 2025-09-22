@@ -40,63 +40,39 @@ class AnimeIndoProvider : MainAPI() {
 
     override val mainPage = mainPageOf(
         "episode-terbaru" to "Episode Terbaru",
-        "tv-shows" to "Anime Ongoing",
-        "trending" to "Anime Populer",
-        "movies" to "Movie Terbaru",
+        "ongoing" to "Anime Ongoing",
+        "populer" to "Anime Populer",
+        "donghua-terbaru" to "Donghua Terbaru",
     )
 
     override suspend fun getMainPage(
         page: Int,
         request: MainPageRequest
     ): HomePageResponse {
-        val document = app.get("$mainUrl/${request.data}?page=$page").document
+        val document = app.get("$mainUrl/${request.data}/page/$page").document
         val home = document.select("main#main div.animposx").mapNotNull {
             it.toSearchResult()
         }
         return newHomePageResponse(request.name, home)
     }
 
-    /*private fun getProperAnimeLink(uri: String): String {
+    private fun getProperAnimeLink(uri: String): String {
         return if (uri.contains("/anime/")) {
             uri
         } else {
-            var title = uri.substringAfter("$mainUrl/tv-show/")
+            var title = uri.substringAfter("$mainUrl/")
             title = when {
-                (title.contains("episode")) && !(title.contains("movie")) -> title.substringBefore(
-                    "episode"
+                (title.contains("-episode")) && !(title.contains("-movie")) -> title.substringBefore(
+                    "-episode"
                 )
 
-                (title.contains("movie")) -> title.substringBefore("movie")
+                (title.contains("-movie")) -> title.substringBefore("-movie")
                 else -> title
             }
 
-            "$mainUrl/tv-show/$title"
-        }
-    }*/
-    private fun getProperAnimeLink(uri: String): String {
-    return if (uri.contains("/tv-show/")) {
-        uri
-    } else {
-        var title = when {
-            uri.contains("$mainUrl/episode/") -> uri.substringAfter("$mainUrl/episode/")
-            uri.contains("$mainUrl/movie/") -> uri.substringAfter("$mainUrl/movie/")
-            else -> ""
-        }
-        
-        // Ambil bagian episode atau movie terakhir
-        val episode = uri.substringAfterLast("/")
-        
-        // Buat tautan sesuai format
-        if (uri.contains("$mainUrl/episode/")) {
-            "$mainUrl/episode/$title/${episode}"
-        } else if (uri.contains("$mainUrl/movie/")) {
-            "$mainUrl/movie/$title/${episode}"
-        } else {
-            "$mainUrl/tv-show/$title"
+            "$mainUrl/anime/$title"
         }
     }
-}
-
 
     private fun Element.toSearchResult(): AnimeSearchResponse {
         val title = this.selectFirst("div.title, h2.entry-title, h4")?.text()?.trim() ?: ""
@@ -114,7 +90,7 @@ class AnimeIndoProvider : MainAPI() {
     override suspend fun search(query: String): List<SearchResponse> {
         val anime = mutableListOf<SearchResponse>()
         (1..2).forEach { page ->
-            val document = app.get("$mainUrl/search/$query?page=$page").document
+            val document = app.get("$mainUrl/page/$page/?s=$query").document
             val media = document.select(".site-main.relat > article").mapNotNull {
                 val title = it.selectFirst("div.title > h2")!!.ownText().trim()
                 val href = it.selectFirst("a")!!.attr("href")
@@ -148,7 +124,7 @@ class AnimeIndoProvider : MainAPI() {
             val header = it.selectFirst("span.lchx > a") ?: return@mapNotNull null
             val episode = header.text().trim().replace("Episode", "").trim().toIntOrNull()
             val link = fixUrl(header.attr("href"))
-            newEpisode(link, episode = episode)
+            newEpisode(link) { this.episode = episode }
         }.reversed()
 
         val recommendations = document.select("div.relat div.animposx").mapNotNull {

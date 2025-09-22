@@ -3,14 +3,13 @@ package com.hexated
 import com.lagradost.cloudstream3.*
 import com.lagradost.cloudstream3.LoadResponse.Companion.addActors
 import com.lagradost.cloudstream3.LoadResponse.Companion.addTrailer
-import com.lagradost.cloudstream3.extractors.Filesim
 import com.lagradost.cloudstream3.utils.*
 import org.jsoup.nodes.Element
 
 class LayarKacaProvider : MainAPI() {
 
-    override var mainUrl = "https://amp.lk21official.mom"
-    private var seriesUrl = "https://tv12.nontondrama.click/"
+    override var mainUrl = "https://tv.lk21official.love"
+    private var seriesUrl = "https://tv1.nontondrama.my"
 
     override var name = "LayarKaca"
     override val hasMainPage = true
@@ -122,12 +121,11 @@ class LayarKacaProvider : MainAPI() {
                 val episode = it.text().toIntOrNull()
                 val season =
                         it.attr("href").substringAfter("season-").substringBefore("-").toIntOrNull()
-                newEpisode(
-                        href,
-                        "Episode $episode",
-                        season,
-                        episode,
-                )
+                newEpisode(href) {
+                    this.name = "Episode $episode"
+                    this.season = season
+                    this.episode = episode
+                }
             }.reversed()
             newTvSeriesLoadResponse(title, url, TvType.TvSeries, episodes) {
                 this.posterUrl = poster

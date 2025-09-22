@@ -12,12 +12,12 @@ import org.jsoup.nodes.Element
 import java.net.URI
 
 open class RebahinProvider : MainAPI() {
-    override var mainUrl = "https://rebahinxxi.shop/"
+    override var mainUrl = "http://rebahin.skin/"
     private var directUrl: String? = null
     override var name = "Rebahin"
     override val hasMainPage = true
     override var lang = "id"
-    open var mainServer = "https://rebahinxxi.shop/"
+    open var mainServer = "http://rebahin.skin/"
     override val supportedTypes = setOf(
         TvType.Movie,
         TvType.TvSeries,
@@ -124,9 +124,10 @@ open class RebahinProvider : MainAPI() {
             }.groupBy { it.first }.map { eps ->
                 newEpisode(
                     data = eps.value.map { fixUrl(base64Decode(it.second)) }.toString(),
-                    name = eps.key,
-                    episode = eps.key.filter { it.isDigit() }.toIntOrNull()
-                )
+                ) {
+                    this.name = eps.key
+                    this.episode = eps.key.filter { it.isDigit() }.toIntOrNull()
+                }
 
             }
             newTvSeriesLoadResponse(title, url, TvType.TvSeries, episodes) {

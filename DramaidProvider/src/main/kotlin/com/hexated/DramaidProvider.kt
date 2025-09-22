@@ -1,17 +1,13 @@
 package com.hexated
 
-import com.fasterxml.jackson.annotation.JsonProperty
 import com.lagradost.cloudstream3.*
-import com.lagradost.cloudstream3.extractors.XStreamCdn
-import com.lagradost.cloudstream3.utils.AppUtils.tryParseJson
 import com.lagradost.cloudstream3.utils.ExtractorLink
-import com.lagradost.cloudstream3.utils.getQualityFromName
 import com.lagradost.cloudstream3.utils.loadExtractor
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Element
 
 open class DramaidProvider : MainAPI() {
-    override var mainUrl = "https://dramaid.skin"
+    override var mainUrl = "https://dramaid.nl"
     override var name = "DramaId"
     override val hasMainPage = true
     override var lang = "id"
@@ -93,10 +89,7 @@ open class DramaidProvider : MainAPI() {
         val episodes = document.select(".eplister > ul > li").mapNotNull {
             val name = it.selectFirst("a > .epl-title")?.text()
             val link = fixUrl(it.selectFirst("a")?.attr("href") ?: return@mapNotNull null)
-            newEpisode(
-                link,
-                name,
-            )
+            newEpisode(link) { this.name = name }
         }.reversed()
 
         val recommendations =
@@ -120,58 +113,6 @@ open class DramaidProvider : MainAPI() {
 
     }
 
-    private data class Sources(
-        @JsonProperty("file") val file: String,
-        @JsonProperty("label") val label: String,
-        @JsonProperty("type") val type: String,
-        @JsonProperty("default") val default: Boolean?
-    )
-
-    private data class Tracks(
-        @JsonProperty("file") val file: String,
-        @JsonProperty("label") val label: String,
-        @JsonProperty("kind") val type: String,
-        @JsonProperty("default") val default: Boolean?
-    )
-
-    private suspend fun invokeDriveSource(
-        url: String,
-        name: String,
-        subCallback: (SubtitleFile) -> Unit,
-        sourceCallback: (ExtractorLink) -> Unit
-    ) {
-        val server = app.get(url).document.selectFirst(".picasa")?.nextElementSibling()?.data()
-
-        val source = "[${server!!.substringAfter("sources: [").substringBefore("],")}]".trimIndent()
-        val trackers = server.substringAfter("tracks:[").substringBefore("],")
-            .replace("//language", "")
-            .replace("file", "\"file\"")
-            .replace("label", "\"label\"")
-            .replace("kind", "\"kind\"").trimIndent()
-
-        tryParseJson<List<Sources>>(source)?.map {
-            sourceCallback(
-                newExtractorLink(
-                    name,
-                    "Drive",
-                    fixUrl(it.file),
-                    referer = "https://motonews.club/",
-                    quality = getQualityFromName(it.label)
-                )
-            )
-        }
-
-        tryParseJson<Tracks>(trackers)?.let {
-            subCallback.invoke(
-                SubtitleFile(
-                    if (it.label.contains("Indonesia")) "${it.label}n" else it.label,
-                    it.file
-                )
-            )
-        }
-
-    }
-
     override suspend fun loadLinks(
         data: String,
         isCasting: Boolean,
@@ -183,19 +124,8 @@ open class DramaidProvider : MainAPI() {
             fixUrl(Jsoup.parse(base64Decode(it.attr("value"))).select("iframe").attr("src"))
         }
 
-        sources.map {
-            it.replace("https://ndrama.xyz", "https://www.fembed.com")
-        }.apmap {
-            when {
-                it.contains("motonews") -> invokeDriveSource(
-                    it,
-                    this.name,
-                    subtitleCallback,
-                    callback
-                )
-
-                else -> loadExtractor(it, "$mainUrl/", subtitleCallback, callback)
-            }
+        sources.apmap {
+            loadExtractor(it, "$mainUrl/", subtitleCallback, callback)
         }
 
         return true

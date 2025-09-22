@@ -3,12 +3,15 @@ package com.hexated
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.lagradost.cloudstream3.SubtitleFile
 import com.lagradost.cloudstream3.*
+import com.lagradost.cloudstream3.extractors.Bestx
+import com.lagradost.cloudstream3.extractors.Chillx
 import com.lagradost.cloudstream3.extractors.Filesim
 import com.lagradost.cloudstream3.utils.AppUtils
 import com.lagradost.cloudstream3.utils.ExtractorApi
 import com.lagradost.cloudstream3.utils.ExtractorLink
 import com.lagradost.cloudstream3.utils.INFER_TYPE
 import com.lagradost.cloudstream3.utils.Qualities
+import com.lagradost.cloudstream3.utils.newExtractorLink
 
 class Archivd : ExtractorApi() {
     override val name: String = "Archivd"
@@ -29,10 +32,10 @@ class Archivd : ExtractorApi() {
                 this.name,
                 this.name,
                 video ?: return,
-                "$mainUrl/",
-                Qualities.Unknown.value,
                 INFER_TYPE
-            )
+            ) {
+                this.referer = "$mainUrl/"
+            }
         )
     }
 
@@ -78,14 +81,15 @@ class Newuservideo : ExtractorApi() {
                     this.name,
                     this.name,
                     it.playUrl ?: return@map,
-                    "$mainUrl/",
-                    when (it.formatId) {
+                    INFER_TYPE
+                ) {
+                    this.referer = "$mainUrl/"
+                    this.quality = when (it.formatId) {
                         18 -> Qualities.P360.value
                         22 -> Qualities.P720.value
                         else -> Qualities.Unknown.value
-                    },
-                    INFER_TYPE
-                )
+                    }
+                }
             )
         }
 
@@ -105,4 +109,9 @@ class Newuservideo : ExtractorApi() {
 class Vidhidepro : Filesim() {
     override val mainUrl = "https://vidhidepro.com"
     override val name = "Vidhidepro"
+}
+
+class Vectorx : Chillx() {
+    override val mainUrl = "https://vectorx.top"
+    override val name = "Vectorx"
 }

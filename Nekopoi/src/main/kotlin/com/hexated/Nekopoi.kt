@@ -6,6 +6,7 @@ import com.lagradost.nicehttp.NiceResponse
 import com.lagradost.nicehttp.Requests
 import com.lagradost.nicehttp.Session
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.runBlocking
 import org.jsoup.nodes.Element
 import java.net.URI
 
@@ -120,8 +121,8 @@ class Nekopoi : MainAPI() {
         val episodes = document.select("div.episodelist ul li").mapNotNull {
             val name = it.selectFirst("a")?.text()
             val link = fixUrlNull(it.selectFirst("a")?.attr("href")) ?: return@mapNotNull null
-            newEpisode(link, name = name)
-        }.takeIf { it.isNotEmpty() } ?: listOf(newEpisode(url, title))
+            newEpisode(link) { this.name = name }
+        }.takeIf { it.isNotEmpty() } ?: listOf(newEpisode(url) { this.name = title })
 
         return newAnimeLoadResponse(title, url, TvType.NSFW) {
             engName = title
@@ -164,18 +165,22 @@ class Nekopoi : MainAPI() {
                             "$mainUrl/",
                             subtitleCallback,
                         ) { link ->
-                            callback.invoke(
-                                newExtractorLink(
-                                    link.name,
-                                    link.name,
-                                    link.url,
-                                    link.referer,
-                                    if (link.type == ExtractorLinkType.M3U8) link.quality else it.first,
-                                    link.type,
-                                    link.headers,
-                                    link.extractorData
+                            runBlocking {
+                                callback.invoke(
+                                    newExtractorLink(
+                                        link.name,
+                                        link.name,
+                                        link.url,
+                                        link.type
+                                    ) {
+                                        this.referer = link.referer
+                                        this.quality =
+                                            if (link.type == ExtractorLinkType.M3U8) link.quality else it.first
+                                        this.headers = link.headers
+                                        this.extractorData = link.extractorData
+                                    }
                                 )
-                            )
+                            }
                         }
                     }
                 }

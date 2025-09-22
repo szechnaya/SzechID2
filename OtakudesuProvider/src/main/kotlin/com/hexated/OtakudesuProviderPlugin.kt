@@ -13,5 +13,6 @@ class OtakudesuProviderPlugin: Plugin() {
         registerExtractorAPI(Moedesu())
         registerExtractorAPI(DesuBeta())
         registerExtractorAPI(Desudesuhd())
+        registerExtractorAPI(Odvidhide())
     }
 }

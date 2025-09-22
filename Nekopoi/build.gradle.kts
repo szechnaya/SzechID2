@@ -7,7 +7,7 @@ cloudstream {
     // All of these properties are optional, you can safely remove them
 
     // description = "Lorem Ipsum"
-     authors = listOf("Szechnaya ID")
+     authors = listOf("Sora")
 
     /**
      * Status int as the following:
@@ -22,7 +22,4 @@ cloudstream {
     )
 
     iconUrl = "https://www.google.com/s2/favicons?domain=nekopoi.care&sz=%size%"
-}
-android {
-    namespace = "com.hexated"
 }

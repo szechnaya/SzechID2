@@ -4,10 +4,13 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import com.lagradost.cloudstream3.APIHolder
 import com.lagradost.cloudstream3.SubtitleFile
 import com.lagradost.cloudstream3.app
+import com.lagradost.cloudstream3.extractors.Filesim
 import com.lagradost.cloudstream3.extractors.Hxfile
 import com.lagradost.cloudstream3.utils.ExtractorApi
 import com.lagradost.cloudstream3.utils.ExtractorLink
+import com.lagradost.cloudstream3.utils.INFER_TYPE
 import com.lagradost.cloudstream3.utils.Qualities
+import com.lagradost.cloudstream3.utils.newExtractorLink
 
 open class Gdplayer : ExtractorApi() {
     override val name = "Gdplayer"
@@ -15,47 +18,48 @@ open class Gdplayer : ExtractorApi() {
     override val requiresReferer = true
 
     override suspend fun getUrl(
-            url: String,
-            referer: String?,
-            subtitleCallback: (SubtitleFile) -> Unit,
-            callback: (ExtractorLink) -> Unit
+        url: String,
+        referer: String?,
+        subtitleCallback: (SubtitleFile) -> Unit,
+        callback: (ExtractorLink) -> Unit
     ) {
         val res = app.get(url, referer = referer).document
         val script = res.selectFirst("script:containsData(player = \"\")")?.data()
         val kaken = script?.substringAfter("kaken = \"")?.substringBefore("\"")
 
         val json = app.get(
-                "$mainUrl/api/?${kaken ?: return}=&_=${APIHolder.unixTimeMS}",
-                headers = mapOf(
-                        "X-Requested-With" to "XMLHttpRequest"
-                )
+            "$mainUrl/api/?${kaken ?: return}=&_=${APIHolder.unixTimeMS}",
+            headers = mapOf(
+                "X-Requested-With" to "XMLHttpRequest"
+            )
         ).parsedSafe<Response>()
 
         json?.sources?.map {
             callback.invoke(
-                    newExtractorLink(
-                            this.name,
-                            this.name,
-                            it.file ?: return@map,
-                            "",
-                            getQuality(json.title)
-                    )
+                newExtractorLink(
+                    this.name,
+                    this.name,
+                    it.file ?: return@map,
+                    INFER_TYPE
+                ) {
+                    this.quality = getQuality(json.title)
+                }
             )
         }
     }
 
     private fun getQuality(str: String?): Int {
         return Regex("(\\d{3,4})[pP]").find(str ?: "")?.groupValues?.getOrNull(1)?.toIntOrNull()
-                ?: Qualities.Unknown.value
+            ?: Qualities.Unknown.value
     }
 
     data class Response(
-            @JsonProperty("title") val title: String? = null,
-            @JsonProperty("sources") val sources: ArrayList<Sources>? = null,
+        @JsonProperty("title") val title: String? = null,
+        @JsonProperty("sources") val sources: ArrayList<Sources>? = null,
     ) {
         data class Sources(
-                @JsonProperty("file") val file: String? = null,
-                @JsonProperty("type") val type: String? = null,
+            @JsonProperty("file") val file: String? = null,
+            @JsonProperty("type") val type: String? = null,
         )
     }
 
@@ -83,4 +87,9 @@ class KotakAnimeidCom : Hxfile() {
     override val name = "KotakAnimeid"
     override val mainUrl = "https://kotakanimeid.com"
     override val requiresReferer = true
+}
+
+class Vidhidepre : Filesim() {
+    override val name = "Vidhidepre"
+    override var mainUrl = "https://vidhidepre.com"
 }

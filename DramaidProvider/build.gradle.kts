@@ -6,8 +6,8 @@ cloudstream {
     language = "id"
     // All of these properties are optional, you can safely remove them
 
-     description = "Include: Oppadrama"
-     authors = listOf("Szechnaya ID")
+    description = "Include: Oppadrama"
+     authors = listOf("Hexated")
 
     /**
      * Status int as the following:
@@ -23,7 +23,4 @@ cloudstream {
     )
 
     iconUrl = "https://www.google.com/s2/favicons?domain=dramaid.asia&sz=%size%"
-}
-android {
-    namespace = "com.hexated"
 }

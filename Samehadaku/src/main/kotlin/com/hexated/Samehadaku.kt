@@ -7,10 +7,12 @@ import com.lagradost.cloudstream3.LoadResponse.Companion.addTrailer
 import com.lagradost.cloudstream3.utils.ExtractorLink
 import com.lagradost.cloudstream3.utils.Qualities
 import com.lagradost.cloudstream3.utils.loadExtractor
+import com.lagradost.cloudstream3.utils.newExtractorLink
+import kotlinx.coroutines.runBlocking
 import org.jsoup.nodes.Element
 
 class Samehadaku : MainAPI() {
-    override var mainUrl = "https://samehadaku.email"
+    override var mainUrl = "https://v1.samehadaku.how"
     override var name = "Samehadaku"
     override val hasMainPage = true
     override var lang = "id"
@@ -20,6 +22,7 @@ class Samehadaku : MainAPI() {
         TvType.AnimeMovie,
         TvType.OVA
     )
+
     companion object {
         fun getType(t: String): TvType {
             return if (t.contains("OVA", true) || t.contains("Special", true)) TvType.OVA
@@ -59,10 +62,11 @@ class Samehadaku : MainAPI() {
         }
 
         if (request.name == "Episode Terbaru") {
-            val home = app.get(request.data + page).document.selectFirst("div.post-show")?.select("ul li")
-                ?.mapNotNull {
-                    it.toSearchResult()
-                } ?: throw ErrorLoadingException("No Media Found")
+            val home =
+                app.get(request.data + page).document.selectFirst("div.post-show")?.select("ul li")
+                    ?.mapNotNull {
+                        it.toSearchResult()
+                    } ?: throw ErrorLoadingException("No Media Found")
             items.add(HomePageList(request.name, home, true))
         }
 
@@ -108,8 +112,11 @@ class Samehadaku : MainAPI() {
             document.selectFirst("div.spe > span:contains(Status)")?.ownText() ?: return null
         )
         val type =
-            getType(document.selectFirst("div.spe > span:contains(Type)")?.ownText()?.trim()?.lowercase()
-                ?: "tv")
+            getType(
+                document.selectFirst("div.spe > span:contains(Type)")?.ownText()?.trim()
+                    ?.lowercase()
+                    ?: "tv"
+            )
         val rating = document.selectFirst("span.ratingValue")?.text()?.trim()?.toRatingInt()
         val description = document.select("div.desc p").text().trim()
         val trailer = document.selectFirst("div.trailer-anime iframe")?.attr("src")
@@ -119,14 +126,14 @@ class Samehadaku : MainAPI() {
             val episode = Regex("Episode\\s?(\\d+)").find(header.text())?.groupValues?.getOrNull(1)
                 ?.toIntOrNull()
             val link = fixUrl(header.attr("href"))
-            newEpisode(link, episode = episode)
+            newEpisode(link) {this.episode = episode}
         }.reversed()
 
         val recommendations = document.select("aside#sidebar ul li").mapNotNull {
             it.toSearchResult()
         }
 
-        val tracker = APIHolder.getTracker(listOf(title),TrackerType.getTypes(type),year,true)
+        val tracker = APIHolder.getTracker(listOf(title), TrackerType.getTypes(type), year, true)
 
         return newAnimeLoadResponse(title, url, type) {
             engName = title
@@ -155,9 +162,15 @@ class Samehadaku : MainAPI() {
 
         val document = app.get(data).document
 
-        document.select("div#downloadb li").map { el ->
+        document.select("div#downloadb li").apmap { el ->
             el.select("a").apmap {
-                loadFixedExtractor(fixUrl(it.attr("href")), el.select("strong").text(), "$mainUrl/", subtitleCallback, callback)
+                loadFixedExtractor(
+                    fixUrl(it.attr("href")),
+                    el.select("strong").text(),
+                    "$mainUrl/",
+                    subtitleCallback,
+                    callback
+                )
             }
         }
 
@@ -172,23 +185,26 @@ class Samehadaku : MainAPI() {
         callback: (ExtractorLink) -> Unit
     ) {
         loadExtractor(url, referer, subtitleCallback) { link ->
-            callback.invoke(
-                newExtractorLink(
-                    link.name,
-                    link.name,
-                    link.url,
-                    link.referer,
-                    name.fixQuality(),
-                    link.type,
-                    link.headers,
-                    link.extractorData
+            runBlocking {
+                callback.invoke(
+                    newExtractorLink(
+                        link.name,
+                        link.name,
+                        link.url,
+                        link.type
+                    ) {
+                        this.referer = link.referer
+                        this.quality = name.fixQuality()
+                        this.headers = link.headers
+                        this.extractorData = link.extractorData
+                    }
                 )
-            )
+            }
         }
     }
 
-    private fun String.fixQuality() : Int {
-        return when(this.uppercase()) {
+    private fun String.fixQuality(): Int {
+        return when (this.uppercase()) {
             "4K" -> Qualities.P2160.value
             "FULLHD" -> Qualities.P1080.value
             "MP4HD" -> Qualities.P720.value

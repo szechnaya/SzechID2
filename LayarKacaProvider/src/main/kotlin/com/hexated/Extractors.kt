@@ -8,6 +8,7 @@ import com.lagradost.cloudstream3.utils.ExtractorLink
 import com.lagradost.cloudstream3.utils.INFER_TYPE
 import com.lagradost.cloudstream3.utils.M3u8Helper
 import com.lagradost.cloudstream3.utils.getQualityFromName
+import com.lagradost.cloudstream3.utils.newExtractorLink
 
 open class Emturbovid : ExtractorApi() {
     override val name = "Emturbovid"
@@ -57,14 +58,15 @@ open class Hownetwork : ExtractorApi() {
 
         res?.data?.map {
             callback.invoke(
-                    newExtractorLink(
-                            this.name,
-                            this.name,
-                            it.file,
-                            url,
-                            getQualityFromName(it.label),
-                            INFER_TYPE
-                    )
+                newExtractorLink(
+                    this.name,
+                    this.name,
+                    it.file,
+                    INFER_TYPE
+                ) {
+                    this.referer = url
+                    this.quality = getQualityFromName(it.label)
+                }
             )
         }
 

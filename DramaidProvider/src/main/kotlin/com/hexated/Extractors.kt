@@ -8,7 +8,11 @@ import com.lagradost.cloudstream3.extractors.Filesim
 import com.lagradost.cloudstream3.extractors.XStreamCdn
 import com.lagradost.cloudstream3.utils.ExtractorApi
 import com.lagradost.cloudstream3.utils.ExtractorLink
+import com.lagradost.cloudstream3.utils.INFER_TYPE
 import com.lagradost.cloudstream3.utils.M3u8Helper
+import com.lagradost.cloudstream3.utils.Qualities
+import com.lagradost.cloudstream3.utils.getQualityFromName
+import com.lagradost.cloudstream3.utils.newExtractorLink
 
 open class Gcam : ExtractorApi() {
     override val name = "Gcam"
@@ -23,14 +27,20 @@ open class Gcam : ExtractorApi() {
     ) {
         val response = app.get(url, referer = referer).text
         val kaken = "kaken\\s*=\\s*\"(.*)\"".toRegex().find(response)?.groupValues?.get(1)
-        val json = app.get("https://cdn2.gdrive.cam/api/?${kaken ?: return}=&_=${APIHolder.unixTimeMS}").parsedSafe<Response>()
+        val json = app.get("https://cdn1.gdrive.cam/api/?${kaken ?: return}=&_=${APIHolder.unixTimeMS}").parsedSafe<Response>()
 
         json?.sources?.map {
-            M3u8Helper.generateM3u8(
-                name,
-                it.file ?: return@map,
-                ""
-            ).forEach(callback)
+            val quality = getQualityFromName(it.label)
+            callback.invoke(
+                newExtractorLink(
+                    name,
+                    "$name ${if(quality != Qualities.Unknown.value) "" else quality}",
+                    it.file?: return@map,
+                    INFER_TYPE
+                ) {
+                    this.quality = getQualityFromName(it.label)
+                }
+            )
         }
 
         json?.tracks?.map {
@@ -51,6 +61,7 @@ open class Gcam : ExtractorApi() {
 
     data class Sources(
         @JsonProperty("file") val file: String? = null,
+        @JsonProperty("label") val label: String? = null,
     )
 
     data class Response(

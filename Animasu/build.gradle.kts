@@ -6,8 +6,8 @@ cloudstream {
     language = "id"
     // All of these properties are optional, you can safely remove them
 
-     description = "Lorem Ipsum"
-     authors = listOf("Szechnaya ID")
+    // description = "Lorem Ipsum"
+     authors = listOf("Hexated")
 
     /**
      * Status int as the following:
@@ -24,7 +24,4 @@ cloudstream {
     )
 
     iconUrl = "https://www.google.com/s2/favicons?domain=animasu.cc&sz=%size%"
-}
-android {
-    namespace = "com.hexated"
 }
