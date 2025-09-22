@@ -25,3 +25,6 @@ cloudstream {
 
     iconUrl = "https://animeindo.skin/favicon/favicon-32x32.png"
 }
+android {
+    namespace = "com.hexated"
+}

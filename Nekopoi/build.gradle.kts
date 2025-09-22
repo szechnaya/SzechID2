@@ -23,3 +23,6 @@ cloudstream {
 
     iconUrl = "https://www.google.com/s2/favicons?domain=nekopoi.care&sz=%size%"
 }
+android {
+    namespace = "com.hexated"
+}

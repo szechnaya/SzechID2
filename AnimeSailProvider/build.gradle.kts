@@ -25,3 +25,6 @@ cloudstream {
 
     iconUrl = "https://aghanim.xyz/wp-content/themes/animesail/assets/images/ico.png"
 }
+android {
+    namespace = "com.hexated"
+}

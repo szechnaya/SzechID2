@@ -24,3 +24,6 @@ cloudstream {
 
     iconUrl = "https://www.google.com/s2/favicons?domain=dramaid.asia&sz=%size%"
 }
+android {
+    namespace = "com.hexated"
+}

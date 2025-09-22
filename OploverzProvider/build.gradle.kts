@@ -25,3 +25,7 @@ cloudstream {
 
     iconUrl = "https://www.google.com/s2/favicons?domain=oploverz.care&sz=%size%"
 }
+
+android {
+    namespace = "com.hexated"
+}

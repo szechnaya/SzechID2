@@ -27,3 +27,7 @@ cloudstream {
     iconUrl = "https://www.google.com/s2/favicons?domain=amp.lk21official.mom&sz=%size%"
 
 }
+
+android {
+    namespace = "com.hexated"
+}

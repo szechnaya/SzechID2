@@ -25,3 +25,6 @@ cloudstream {
 
     iconUrl = "https://www.google.com/s2/favicons?domain=185.231.223.76&sz=%size%"
 }
+android {
+    namespace = "com.hexated"
+}

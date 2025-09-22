@@ -25,3 +25,6 @@ cloudstream {
 
     iconUrl = "https://www.google.com/s2/favicons?domain=gomunime.is&sz=%size%"
 }
+android {
+    namespace = "com.hexated"
+}
