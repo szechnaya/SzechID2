@@ -119,7 +119,7 @@ class Samehadaku : MainAPI() {
             val episode = Regex("Episode\\s?(\\d+)").find(header.text())?.groupValues?.getOrNull(1)
                 ?.toIntOrNull()
             val link = fixUrl(header.attr("href"))
-            Episode(link, episode = episode)
+            newEpisode(link, episode = episode)
         }.reversed()
 
         val recommendations = document.select("aside#sidebar ul li").mapNotNull {
@@ -173,7 +173,7 @@ class Samehadaku : MainAPI() {
     ) {
         loadExtractor(url, referer, subtitleCallback) { link ->
             callback.invoke(
-                ExtractorLink(
+                newExtractorLink(
                     link.name,
                     link.name,
                     link.url,

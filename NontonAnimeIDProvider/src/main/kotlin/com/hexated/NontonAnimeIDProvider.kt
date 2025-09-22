@@ -136,7 +136,7 @@ class NontonAnimeIDProvider : MainAPI() {
                     it.selectFirst("a")?.text().toString()
                 )?.groupValues?.getOrNull(0) ?: it.selectFirst("a")?.text()
                 val link = fixUrl(it.selectFirst("a")!!.attr("href"))
-                Episode(link, episode = episode?.toIntOrNull())
+                newEpisode(link, episode = episode?.toIntOrNull())
             }.reversed()
         } else {
             document.select("ul.misha_posts_wrap2 > li").map {
@@ -144,7 +144,7 @@ class NontonAnimeIDProvider : MainAPI() {
                     it.selectFirst("a")?.text().toString()
                 )?.groupValues?.getOrNull(0) ?: it.selectFirst("a")?.text()
                 val link = it.select("a").attr("href")
-                Episode(link, episode = episode?.toIntOrNull())
+                newEpisode(link, episode = episode?.toIntOrNull())
             }.reversed()
         }
 

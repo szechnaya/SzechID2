@@ -33,7 +33,7 @@ open class Gdplayer : ExtractorApi() {
 
         json?.sources?.map {
             callback.invoke(
-                    ExtractorLink(
+                    newExtractorLink(
                             this.name,
                             this.name,
                             it.file ?: return@map,

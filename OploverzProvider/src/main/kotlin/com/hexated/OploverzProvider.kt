@@ -119,7 +119,7 @@ class OploverzProvider : MainAPI() {
             val header = it.selectFirst("a") ?: return@mapNotNull null
             val episode = header.text().trim().toIntOrNull()
             val link = fixUrl(header.attr("href"))
-            Episode(link, episode = episode)
+            newEpisode(link, episode = episode)
         }.reversed()
 
         val tracker = APIHolder.getTracker(listOf(title),TrackerType.getTypes(type),year,true)
@@ -194,7 +194,7 @@ class OploverzProvider : MainAPI() {
     ) {
         loadExtractor(url, referer, subtitleCallback) { link ->
             callback.invoke(
-                ExtractorLink(
+                newExtractorLink(
                     link.name,
                     link.name,
                     link.url,

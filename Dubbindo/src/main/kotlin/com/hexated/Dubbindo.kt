@@ -111,7 +111,7 @@ class Dubbindo : MainAPI() {
         tryParseJson<List<Video>>(data)?.map { video ->
             if(video.type == "video/mp4" || video.type == "video/x-msvideo" || video.type == "video/x-matroska") {
                 callback.invoke(
-                    ExtractorLink(
+                    newExtractorLink(
                         this.name,
                         this.name,
                         video.src ?: return@map,

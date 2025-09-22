@@ -122,7 +122,7 @@ class LayarKacaProvider : MainAPI() {
                 val episode = it.text().toIntOrNull()
                 val season =
                         it.attr("href").substringAfter("season-").substringBefore("-").toIntOrNull()
-                Episode(
+                newEpisode(
                         href,
                         "Episode $episode",
                         season,

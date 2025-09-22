@@ -118,7 +118,7 @@ class KuramanimeProvider : MainAPI() {
                         val episode = Regex("(\\d+[.,]?\\d*)").find(name)?.groupValues?.getOrNull(0)
                                 ?.toIntOrNull()
                         val link = it.attr("href")
-                        Episode(link, episode = episode)
+                        newEpisode(link, episode = episode)
                     }
             if (eps.isEmpty()) break else episodes.addAll(eps)
         }

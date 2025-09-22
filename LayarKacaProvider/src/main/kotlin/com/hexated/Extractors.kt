@@ -57,7 +57,7 @@ open class Hownetwork : ExtractorApi() {
 
         res?.data?.map {
             callback.invoke(
-                    ExtractorLink(
+                    newExtractorLink(
                             this.name,
                             this.name,
                             it.file,

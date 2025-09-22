@@ -103,7 +103,7 @@ class Gomunimeis : MainAPI() {
                 it.select(".epl-title").text()
             )?.groupValues?.getOrNull(0)
             val link = it.select("a").attr("href")
-            Episode(link, episode = episode?.toIntOrNull())
+            newEpisode(link, episode = episode?.toIntOrNull())
         }.reversed()
 
         return newAnimeLoadResponse(title, url, getType(type)) {

@@ -114,7 +114,7 @@ class OtakudesuProvider : MainAPI() {
             val episode = Regex("Episode\\s?(\\d+)").find(name)?.groupValues?.getOrNull(0)
                 ?: it.selectFirst("a")?.text()
             val link = fixUrl(it.selectFirst("a")!!.attr("href"))
-            Episode(link, episode = episode?.toIntOrNull())
+            newEpisode(link, episode = episode?.toIntOrNull())
         }.reversed()
 
         val recommendations =
@@ -237,7 +237,7 @@ class OtakudesuProvider : MainAPI() {
     ) {
         loadExtractor(url, referer, subtitleCallback) { link ->
             callback.invoke(
-                ExtractorLink(
+                newExtractorLink(
                     link.name,
                     link.name,
                     link.url,

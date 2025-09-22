@@ -125,7 +125,7 @@ class DramaSerial : MainAPI() {
         val json = "sources:\\s*\\[(.*)]".toRegex().find(script)?.groupValues?.get(1)
         AppUtils.tryParseJson<ArrayList<Sources>>("[$json]")?.map {
             callback.invoke(
-                ExtractorLink(
+                newExtractorLink(
                     name,
                     name,
                     it.file ?: return@map,

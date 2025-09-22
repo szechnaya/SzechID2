@@ -20,7 +20,7 @@ open class Qiwi : ExtractorApi() {
         val source = document.select("video source").attr("src")
 
         callback.invoke(
-            ExtractorLink(
+            newExtractorLink(
                 this.name,
                 this.name,
                 source,

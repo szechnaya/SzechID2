@@ -37,7 +37,7 @@ open class Lbx : ExtractorApi() {
         app.get("$realUrl/api/file/detail?itemId=$id", referer = url)
             .parsedSafe<Responses>()?.data?.itemInfo?.resolutionList?.map { link ->
                 callback.invoke(
-                    ExtractorLink(
+                    newExtractorLink(
                         name,
                         name,
                         link.url ?: return@map null,
@@ -96,7 +96,7 @@ open class Kuramadrive : ExtractorApi() {
         ).parsedSafe<Source>()
 
         callback.invoke(
-            ExtractorLink(
+            newExtractorLink(
                 name,
                 name,
                 json?.url ?: return,

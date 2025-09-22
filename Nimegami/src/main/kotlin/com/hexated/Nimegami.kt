@@ -110,7 +110,7 @@ class Nimegami : MainAPI() {
                 val episode = Regex("Episode\\s?(\\d+)").find(it.text())?.groupValues?.getOrNull(0)
                     ?.toIntOrNull()
                 val link = it.attr("data")
-                Episode(link, episode = episode)
+                newEpisode(link, episode = episode)
             }
 
         val recommendations = document.select("div#randomList > a").mapNotNull {
@@ -174,7 +174,7 @@ class Nimegami : MainAPI() {
     ) {
         loadExtractor(url, referer, subtitleCallback) { link ->
             callback.invoke(
-                ExtractorLink(
+                newExtractorLink(
                     link.name,
                     link.name,
                     link.url,

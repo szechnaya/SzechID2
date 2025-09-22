@@ -133,7 +133,7 @@ class GomunimeProvider : MainAPI() {
                 Regex("(Episode\\s?[0-9]+)").find(it.epTitle.toString())?.groupValues?.getOrNull(0)
                     ?: it.epTitle
             val link = it.epLink
-            Episode(link, name)
+            newEpisode(link, name)
         }.reversed()
 
         return newAnimeLoadResponse(title, url, TvType.Anime) {
@@ -198,7 +198,7 @@ class GomunimeProvider : MainAPI() {
                             data = mapOf("data" to it.first, "func" to "blogs")
                         ).parsed<List<MobiSource>>().map {
                             callback.invoke(
-                                ExtractorLink(
+                                newExtractorLink(
                                     source = name,
                                     name = "Mobi SD",
                                     url = it.file,

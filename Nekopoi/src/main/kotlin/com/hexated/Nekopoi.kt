@@ -120,8 +120,8 @@ class Nekopoi : MainAPI() {
         val episodes = document.select("div.episodelist ul li").mapNotNull {
             val name = it.selectFirst("a")?.text()
             val link = fixUrlNull(it.selectFirst("a")?.attr("href")) ?: return@mapNotNull null
-            Episode(link, name = name)
-        }.takeIf { it.isNotEmpty() } ?: listOf(Episode(url, title))
+            newEpisode(link, name = name)
+        }.takeIf { it.isNotEmpty() } ?: listOf(newEpisode(url, title))
 
         return newAnimeLoadResponse(title, url, TvType.NSFW) {
             engName = title
@@ -165,7 +165,7 @@ class Nekopoi : MainAPI() {
                             subtitleCallback,
                         ) { link ->
                             callback.invoke(
-                                ExtractorLink(
+                                newExtractorLink(
                                     link.name,
                                     link.name,
                                     link.url,

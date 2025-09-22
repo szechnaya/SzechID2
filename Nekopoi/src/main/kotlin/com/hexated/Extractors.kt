@@ -20,7 +20,7 @@ open class ZippyShare : ExtractorApi() {
         val res = app.get(url, referer = referer).document
         val video = res.selectFirst("a#download-url")?.attr("href")
         callback.invoke(
-            ExtractorLink(
+            newExtractorLink(
                 this.name,
                 this.name,
                 video ?: return,
