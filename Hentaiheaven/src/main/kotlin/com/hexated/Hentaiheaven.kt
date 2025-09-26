@@ -117,7 +117,7 @@ class Hentaiheaven : MainAPI() {
             println("Meta: $meta")
             println("Iframe src: $iframe")
             println("en: $en, iv: $iv")
-            println("Response src: ${res.src}")
+            //println("Response src: ${res.src}")
             val body = FormBody.Builder()
                 .addEncoded("action", "zarat_get_data_player_ajax")
                 .addEncoded("a", "$en")
@@ -128,6 +128,10 @@ class Hentaiheaven : MainAPI() {
                 "$mainUrl/wp-content/plugins/player-logic/api.php",
                 requestBody = body,
             ).parsedSafe<Response>()?.data?.sources?.map { res ->
+                println("Response src: ${res.src}")
+                println("Meta: $meta")
+                println("Iframe src: $iframe")
+                println("en: $en, iv: $iv")
                 callback.invoke(
                     newExtractorLink(
                         this.name,
