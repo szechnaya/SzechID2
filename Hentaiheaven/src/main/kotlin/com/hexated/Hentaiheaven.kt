@@ -128,7 +128,9 @@ class Hentaiheaven : MainAPI() {
                     newExtractorLink(
                         this.name,
                         this.name,
-                        res.src?.replace("/hh//", "/hh/$meta/") ?: return@map null,
+                        //res.src?.replace("/hh//", "/hh/$meta/") ?: return@map null,
+                        //Test Fix
+                        red.src?: return@map null,
                         INFER_TYPE
                     )
                 )
