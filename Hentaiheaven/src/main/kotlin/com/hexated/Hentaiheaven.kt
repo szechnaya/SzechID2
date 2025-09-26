@@ -114,6 +114,10 @@ class Hentaiheaven : MainAPI() {
             val en = Regex("var\\sen\\s=\\s'(\\S+)';").find(document)?.groupValues?.getOrNull(1)
             val iv = Regex("var\\siv\\s=\\s'(\\S+)';").find(document)?.groupValues?.getOrNull(1)
 
+            println("Meta: $meta")
+            println("Iframe src: $iframe")
+            println("en: $en, iv: $iv")
+            println("Response src: ${res.src}")
             val body = FormBody.Builder()
                 .addEncoded("action", "zarat_get_data_player_ajax")
                 .addEncoded("a", "$en")
