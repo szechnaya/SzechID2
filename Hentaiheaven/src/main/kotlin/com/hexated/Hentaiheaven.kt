@@ -98,6 +98,7 @@ class Hentaiheaven : MainAPI() {
 
     }
 
+    /*
     override suspend fun loadLinks(
         data: String,
         isCasting: Boolean,
@@ -147,7 +148,75 @@ class Hentaiheaven : MainAPI() {
         }
 
         return true
-    }
+    }*/
+    override suspend fun loadLinks(
+    data: String,
+    isCasting: Boolean,
+    subtitleCallback: (SubtitleFile) -> Unit,
+    callback: (ExtractorLink) -> Unit
+): Boolean {
+
+    val doc = app.get(data).document
+    val meta = doc.selectFirst("meta[itemprop=thumbnailUrl]")?.attr("content")
+?.substringAfter("/hh/")?.substringBefore("/")?: return false
+
+    val iframe = doc.select("div.player_logic_item iframe").attr("src")
+
+    val dataParam = Regex("[?&]data=([^&]+)").find(iframe)?.groupValues?.getOrNull(1)
+    if (dataParam == null) return false
+
+    var en: String? = null
+    var iv: String? = null
+
+    if (dataParam.endsWith("=")) {
+        // Base64 mode
+        val decoded = try {
+            val raw = Base64.getDecoder().decode(dataParam)
+            String(raw)
+} catch (e: Exception) {
+            return false
+}
+
+        en = Regex("^(.*?)::").find(decoded)?.groupValues?.getOrNull(1)
+        iv = Regex("::(.*?)$").find(decoded)?.groupValues?.getOrNull(1)
+        println("Detected Base64 mode")
+} else {
+        // Plain mode
+        if (dataParam.length <= 32) return false
+        en = dataParam.dropLast(32)
+        iv = dataParam.takeLast(32)
+        println("Detected plain mode")
+}
+
+    println("Meta: $meta")
+    println("Iframe src: $iframe")
+    println("en: $en, iv: $iv")
+
+    if (en == null || iv == null) return false
+
+    val body = FormBody.Builder()
+.addEncoded("action", "zarat_get_data_player_ajax")
+.addEncoded("a", en)
+.addEncoded("b", iv)
+.build()
+
+    app.post(
+        "$mainUrl/wp-content/plugins/player-logic/api.php",
+        requestBody = body,
+).parsedSafe<Response>()?.data?.sources?.map { res ->
+        println("Response src: ${res.src}")
+        callback.invoke(
+            newExtractorLink(
+                this.name,
+                this.name,
+                res.src?: return@map null,
+                INFER_TYPE
+)
+)
+}
+
+    return true
+}
 
     data class Response(
         @JsonProperty("data") val data: Data? = null,
