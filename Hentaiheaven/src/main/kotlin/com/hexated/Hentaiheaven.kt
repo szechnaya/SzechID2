@@ -164,36 +164,30 @@ class Hentaiheaven : MainAPI() {
     val iframe = doc.select("div.player_logic_item iframe").attr("src")
 
     val dataParam = Regex("[?&]data=([^&]+)").find(iframe)?.groupValues?.getOrNull(1)
-    if (dataParam == null) return false
+    if (dataParam == null ||!dataParam.endsWith("=")) return false
 
-    var en: String? = null
-    var iv: String? = null
-
-    if (dataParam.endsWith("=")) {
-        // Base64 mode
-        val decoded = try {
-            val raw = Base64.getDecoder().decode(dataParam)
-            String(raw)
+    val decoded = try {
+        val raw = Base64.getDecoder().decode(dataParam)
+        String(raw)
 } catch (e: Exception) {
-            return false
+        println("Failed to decode Base64: ${e.message}")
+        return false
 }
 
-        en = Regex("^(.*?)::").find(decoded)?.groupValues?.getOrNull(1)
-        iv = Regex("::(.*?)$").find(decoded)?.groupValues?.getOrNull(1)
-        println("Detected Base64 mode")
-} else {
-        // Plain mode
-        if (dataParam.length <= 32) return false
-        en = dataParam.dropLast(32)
-        iv = dataParam.takeLast(32)
-        println("Detected plain mode")
+    val parts = decoded.split(":|::|:")
+    if (parts.size!= 2) {
+        println("Unexpected format after decoding: $decoded")
+        return false
 }
+
+    val en = parts[0]
+    val iv = parts[1]
 
     println("Meta: $meta")
     println("Iframe src: $iframe")
-    println("en: $en, iv: $iv")
-
-    if (en == null || iv == null) return false
+    println("Decoded: $decoded")
+    println("en: $en")
+    println("iv: $iv")
 
     val body = FormBody.Builder()
 .addEncoded("action", "zarat_get_data_player_ajax")
