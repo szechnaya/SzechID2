@@ -6,6 +6,7 @@ import com.lagradost.cloudstream3.LoadResponse.Companion.addTrailer
 import com.lagradost.cloudstream3.utils.*
 import okhttp3.FormBody
 import org.jsoup.nodes.Element
+import java.util.Base64
 
 class Hentaiheaven : MainAPI() {
     override var mainUrl = "https://hentaihaven.xxx"
