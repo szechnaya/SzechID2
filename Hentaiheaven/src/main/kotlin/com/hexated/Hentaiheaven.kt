@@ -181,7 +181,14 @@ class Hentaiheaven : MainAPI() {
 }
 
     val en = parts[0]
-    val iv = parts[1]
+    val encoded = try {
+        val raw = Base64.getEncoder().encode(parts[1])
+        String(raw)
+} catch (e: Exception) {
+        println("Failed to decode Base64: ${e.message}")
+        return false
+}
+    val iv = encoded
 
     println("Meta: $meta")
     println("Iframe src: $iframe")
