@@ -111,6 +111,7 @@ class Hentaiheaven : MainAPI() {
                 ?.substringBefore("/") ?: return false
         doc.select("div.player_logic_item iframe").attr("src").let { iframe ->
             val document = app.get(iframe, referer = data).text
+            println("Iframe JS: $data")
             val en = Regex("var\\sen\\s=\\s'(\\S+)';").find(document)?.groupValues?.getOrNull(1)
             val iv = Regex("var\\siv\\s=\\s'(\\S+)';").find(document)?.groupValues?.getOrNull(1)
 
