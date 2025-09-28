@@ -195,9 +195,16 @@ class Hentaiheaven : MainAPI() {
 .addEncoded("b", iv)
 .build()
 
-val response = app.post(
-    "$mainUrl/wp-content/plugins/player-logic/api.php",
-    requestBody = body,
+val headers = Headers.Builder()
+.add("User-Agent", "Mozilla/5.0")
+.add("Accept", "application/json")
+.add("Referer", mainUrl)
+.build()
+
+   val response = app.post(
+       "$mainUrl/wp-content/plugins/player-logic/api.php",
+       requestBody = body,
+       headers = headers
 ).parsedSafe<Response>()
 
 if (response == null) {
