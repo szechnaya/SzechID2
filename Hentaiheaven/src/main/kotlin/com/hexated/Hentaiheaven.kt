@@ -202,13 +202,13 @@ val response = app.post(
 
 if (response == null) {
     println("Response is null or failed to parse")
-    return
+    return false
 }
 
 val sources = response.data?.sources
 if (sources.isNullOrEmpty()) {
     println("No sources found in response")
-    return
+    return false
 }
 
 sources.forEach { res ->
