@@ -195,17 +195,37 @@ class Hentaiheaven : MainAPI() {
 .addEncoded("b", iv)
 .build()
 
-    app.post(
-        "$mainUrl/wp-content/plugins/player-logic/api.php",
-        requestBody = body,
-).parsedSafe<Response>()?.data?.sources?.map { res ->
-        println("Response src: ${res.src}")
-        callback.invoke(
-            newExtractorLink(
-                this.name,
-                this.name,
-                res.src?: return@map null,
-                INFER_TYPE
+val response = app.post(
+    "$mainUrl/wp-content/plugins/player-logic/api.php",
+    requestBody = body,
+).parsedSafe<Response>()
+
+if (response == null) {
+    println("Response is null or failed to parse")
+    return
+}
+
+val sources = response.data?.sources
+if (sources.isNullOrEmpty()) {
+    println("No sources found in response")
+    return
+}
+
+sources.forEach { res ->
+    val src = res.src
+    if (src == null) {
+        println("Source is null, skipping")
+        return@forEach
+}
+
+    println("Response src: $src")
+
+    callback.invoke(
+        newExtractorLink(
+            this.name,
+            this.name,
+            src,
+            INFER_TYPE
 )
 )
 }
