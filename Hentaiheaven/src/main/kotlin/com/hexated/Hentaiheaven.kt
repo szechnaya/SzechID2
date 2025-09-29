@@ -202,15 +202,17 @@ val headers = Headers.Builder()
 .add("Referer", mainUrl)
 .build()
 
+val headersMap = headers.toMultimap().mapValues { it.value.joinToString(",")}
+
    val response = app.post(
        "$mainUrl/wp-content/plugins/player-logic/api.php",
        requestBody = body,
-       headers = headers.toMultimaps().mapValues{ it.value.joinToString(",")}
+       headers = headersMap
 ).parsedSafe<Response>()
 val debugRes = app.post(
     "$mainUrl/wp-content/plugins/player-logic/api.php",
        requestBody = body,
-       headers = headers.toMultimaps().mapValues{ it.value.joinToString(",")}
+       headers = headersMap
 )
 if (response == null) {
     println("Response is null or failed to parse $debugRes")
