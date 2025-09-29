@@ -207,9 +207,13 @@ val headers = Headers.Builder()
        requestBody = body,
        headers = headers
 ).parsedSafe<Response>()
-
+val debugRes = app.post(
+    "$mainUrl/wp-content/plugins/player-logic/api.php",
+       requestBody = body,
+       headers = headers
+)
 if (response == null) {
-    println("Response is null or failed to parse")
+    println("Response is null or failed to parse $debugRes")
     return false
 }
 
