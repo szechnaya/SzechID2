@@ -15,8 +15,8 @@ class Hentaiheaven : MainAPI() {
     override val hasMainPage = true
     override var lang = "en"
     override val hasDownloadSupport = true
-    override val fycfUrl = BuildConfig.FYCF_ENDPOINT
-    override val FYCF_API = BuildConfig.FYCF_API
+    const val fycfUrl = BuildConfig.FYCF_ENDPOINT
+    const val FYCF_API = BuildConfig.FYCF_API
 
     override val supportedTypes = setOf(
         TvType.NSFW
