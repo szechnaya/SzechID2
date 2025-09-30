@@ -12,6 +12,10 @@ android {
 
 
     }
+    
+    buildFeatures {
+        BuildConfig = true
+    }
 }
 
 cloudstream {
