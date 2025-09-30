@@ -211,7 +211,7 @@ if (response == null) {
 
 val sources = response.data?.sources
 if (sources.isNullOrEmpty()) {
-    println("No sources found in response")
+    println("No sources found in response $response")
     return false
 }
 
