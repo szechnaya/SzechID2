@@ -29,16 +29,16 @@ class Minioppai : MainAPI() {
     }
 
     override val mainPage = mainPageOf(
-        "$mainUrl/watch" to "New Episode",
-        "$mainUrl/populars" to "Popular Hentai",
+        "$mainUrl/anime/?status=&type=&order=update" to "New Episode",
+        "$mainUrl/populars/?" to "Popular Hentai",
     )
 
     override suspend fun getMainPage(
         page: Int,
         request: MainPageRequest
     ): HomePageResponse {
-        val document = app.get("${request.data}/page/$page").document
-        val home = document.select("div.latest a").mapNotNull {
+        val document = app.get("${request.data}&page=$page").document
+        val home = document.select("div.excstf a").mapNotNull {
             it.toSearchResult()
         }
         return newHomePageResponse(
