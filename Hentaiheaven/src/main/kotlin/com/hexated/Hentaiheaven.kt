@@ -201,6 +201,7 @@ class Hentaiheaven : MainAPI() {
    val response = app.post(
        "$fycfUrl/?token=$FYCF_API&url=$mainUrl/wp-content/plugins/player-logic/api.php&render=false",
        requestBody = body,
+       timeout = 60_000
 ).parsedSafe<Response>()
 
 if (response == null) {
