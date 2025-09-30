@@ -202,7 +202,7 @@ class Hentaiheaven : MainAPI() {
        "$fycfUrl/?token=$FYCF_API&url=$mainUrl/wp-content/plugins/player-logic/api.php&render=false",
        requestBody = body,
        timeout = 60_000
-).parsedSafe<Response>()
+)
 
 if (response == null) {
     println("Response is null or failed to parse")
