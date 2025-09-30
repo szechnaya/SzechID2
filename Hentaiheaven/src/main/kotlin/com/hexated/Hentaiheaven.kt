@@ -183,7 +183,7 @@ class Hentaiheaven : MainAPI() {
 }
 
     val en = parts[0]
-    val iv = Base64.getEncoder().encodeToString(parts[1].toByteArray())
+    val iv = parts[1]//Base64.getEncoder().encodeToString(parts[1].toByteArray())
 
     println("Meta: $meta")
     println("Iframe src: $iframe")
