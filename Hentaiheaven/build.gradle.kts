@@ -1,6 +1,17 @@
 // use an integer for version numbers
-version = 5
+version = 6
 
+android {
+    defaultConfig {
+        val properties = Properties()
+        properties.load(project.rootProject.file("local.properties").inputStream())
+
+        buildConfigField("String", "FYCF_API", "\"${properties.getProperty("FYCF_API")}\"")
+        buildConfigField("String", "FYCF_ENDPOINT", "\"${properties.getProperty("FYCF_ENDPOINT")}\"")
+
+
+    }
+}
 
 cloudstream {
     language = "en"

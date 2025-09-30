@@ -15,6 +15,8 @@ class Hentaiheaven : MainAPI() {
     override val hasMainPage = true
     override var lang = "en"
     override val hasDownloadSupport = true
+    override val fycfUrl = BuildConfig.FYCF_ENDPOINT
+    override val FYCF_API = BuildConfig.FYCF_API
 
     override val supportedTypes = setOf(
         TvType.NSFW
@@ -196,26 +198,13 @@ class Hentaiheaven : MainAPI() {
 .addEncoded("b", iv)
 .build()
 
-val headers = Headers.Builder()
-.add("User-Agent", "Mozilla/5.0")
-.add("Accept", "application/json")
-.add("Referer", mainUrl)
-.build()
-
-val headersMap = headers.toMultimap().mapValues { it.value.joinToString(",")}
-
    val response = app.post(
-       "$mainUrl/wp-content/plugins/player-logic/api.php",
+       "$fycfUrl/?token=$FYCF_API&url=$mainUrl/wp-content/plugins/player-logic/api.php&render=false",
        requestBody = body,
-       headers = headersMap
 ).parsedSafe<Response>()
-val debugRes = app.post(
-    "$mainUrl/wp-content/plugins/player-logic/api.php",
-       requestBody = body,
-       headers = headersMap
-)
+
 if (response == null) {
-    println("Response is null or failed to parse $debugRes")
+    println("Response is null or failed to parse")
     return false
 }
 

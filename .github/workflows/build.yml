@@ -40,6 +40,15 @@ jobs:
 
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3.2.2
+      
+      - name: Access Secrets
+        env:
+            FYCF_API: ${{ secrets.FYCF_API }}
+            FYCF_ENDPOINT: ${{ secrets.FYCF_ENDPOINT }}
+        run: |
+            cd $GITHUB_WORKSPACE/src
+            echo FYCF_API=$FYCF_API >> local.properties
+            echo FYCF_ENDPOINT=$FYCF_ENDPOINT >> local.properties
 
       - name: Build Plugins
         run: |
