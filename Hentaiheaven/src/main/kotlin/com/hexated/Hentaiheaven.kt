@@ -207,7 +207,7 @@ class Hentaiheaven : MainAPI() {
    val fycfUrl = BuildConfig.FYCF_ENDPOINT
    val FYCF_API = BuildConfig.FYCF_API
    val response = app.post(
-       "$fycfUrl/?token=$FYCF_API&url=$mainUrl/wp-content/plugins/player-logic/api.php&render=false",
+       "$mainUrl/wp-content/plugins/player-logic/api.php",
        requestBody = body,
        timeout = 60_000
 ).parsedSafe<Response>()
