@@ -15,9 +15,7 @@ class Hentaiheaven : MainAPI() {
     override val hasMainPage = true
     override var lang = "en"
     override val hasDownloadSupport = true
-    const val fycfUrl = BuildConfig.FYCF_ENDPOINT
-    const val FYCF_API = BuildConfig.FYCF_API
-
+    
     override val supportedTypes = setOf(
         TvType.NSFW
     )
@@ -198,6 +196,8 @@ class Hentaiheaven : MainAPI() {
 .addEncoded("b", iv)
 .build()
 
+   val fycfUrl = BuildConfig.FYCF_ENDPOINT
+   val FYCF_API = BuildConfig.FYCF_API
    val response = app.post(
        "$fycfUrl/?token=$FYCF_API&url=$mainUrl/wp-content/plugins/player-logic/api.php&render=false",
        requestBody = body,
