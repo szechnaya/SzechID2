@@ -5,6 +5,7 @@ import com.lagradost.cloudstream3.*
 import com.lagradost.cloudstream3.LoadResponse.Companion.addTrailer
 import com.lagradost.cloudstream3.utils.*
 import okhttp3.FormBody
+import okhttp3.MultipartBody
 import okhttp3.Headers
 import org.jsoup.nodes.Element
 import java.util.Base64
@@ -190,10 +191,17 @@ class Hentaiheaven : MainAPI() {
     println("en: $en")
     println("iv: $iv")
 
+    /*
     val body = FormBody.Builder()
 .addEncoded("action", "zarat_get_data_player_ajax")
 .addEncoded("a", en)
 .addEncoded("b", iv)
+.build()*/
+   val body = MultipartBody.Builder()
+.setType(MultipartBody.FORM)
+.addFormDataPart("action", "zarat_get_data_player_ajax")
+.addFormDataPart("a", en)
+.addFormDataPart("b", iv)
 .build()
 
    val fycfUrl = BuildConfig.FYCF_ENDPOINT
@@ -202,7 +210,7 @@ class Hentaiheaven : MainAPI() {
        "$fycfUrl/?token=$FYCF_API&url=$mainUrl/wp-content/plugins/player-logic/api.php&render=false",
        requestBody = body,
        timeout = 60_000
-)
+).parsedSave<Response>()
 
 if (response == null) {
     println("Response is null or failed to parse")
