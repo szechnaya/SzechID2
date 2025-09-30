@@ -166,7 +166,7 @@ class Hentaiheaven : MainAPI() {
     val iframe = doc.select("div.player_logic_item iframe").attr("src")
 
     val dataParam = Regex("[?&]data=([^&]+)").find(iframe)?.groupValues?.getOrNull(1)
-    if (dataParam == null ||!dataParam.endsWith("=")) return false
+    if (dataParam == null) return false
 
     val decoded = try {
         val raw = Base64.getDecoder().decode(dataParam)
@@ -183,13 +183,14 @@ class Hentaiheaven : MainAPI() {
 }
 
     val en = parts[0]
-    val iv = parts[1]//Base64.getEncoder().encodeToString(parts[1].toByteArray())
+    val iv = Base64.getEncoder().encodeToString(parts[1].toByteArray())
 
     println("Meta: $meta")
     println("Iframe src: $iframe")
     println("Decoded: $decoded")
     println("en: $en")
     println("iv: $iv")
+    
 
     /*
     val body = FormBody.Builder()
@@ -207,7 +208,7 @@ class Hentaiheaven : MainAPI() {
    val fycfUrl = BuildConfig.FYCF_ENDPOINT
    val FYCF_API = BuildConfig.FYCF_API
    val response = app.post(
-       "$mainUrl/wp-content/plugins/player-logic/api.php",
+       "$fycfUrl/?token=$FYCF_API&url=$mainUrl/wp-content/plugins/player-logic/api.php",
        requestBody = body,
        timeout = 60_000
 ).parsedSafe<Response>()
