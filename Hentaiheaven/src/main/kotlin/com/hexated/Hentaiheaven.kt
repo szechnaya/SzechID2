@@ -4,9 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import com.lagradost.cloudstream3.*
 import com.lagradost.cloudstream3.LoadResponse.Companion.addTrailer
 import com.lagradost.cloudstream3.utils.*
-import okhttp3.FormBody
 import okhttp3.MultipartBody
-import okhttp3.Headers
 import org.jsoup.nodes.Element
 import java.util.Base64
 
@@ -101,57 +99,6 @@ class Hentaiheaven : MainAPI() {
 
     }
 
-    /*
-    override suspend fun loadLinks(
-        data: String,
-        isCasting: Boolean,
-        subtitleCallback: (SubtitleFile) -> Unit,
-        callback: (ExtractorLink) -> Unit
-    ): Boolean {
-
-        val doc = app.get(data).document
-        val meta =
-            doc.selectFirst("meta[itemprop=thumbnailUrl]")?.attr("content")?.substringAfter("/hh/")
-                ?.substringBefore("/") ?: return false
-        doc.select("div.player_logic_item iframe").attr("src").let { iframe ->
-            val document = app.get(iframe, referer = data).text
-            println("Iframe JS: $document")
-            val en = Regex("var\\sen\\s=\\s'(\\S+)';").find(document)?.groupValues?.getOrNull(1)
-            val iv = Regex("var\\siv\\s=\\s'(\\S+)';").find(document)?.groupValues?.getOrNull(1)
-
-            println("Meta: $meta")
-            println("Iframe src: $iframe")
-            println("en: $en, iv: $iv")
-            //println("Response src: ${res.src}")
-            val body = FormBody.Builder()
-                .addEncoded("action", "zarat_get_data_player_ajax")
-                .addEncoded("a", "$en")
-                .addEncoded("b", "$iv")
-                .build()
-
-            app.post(
-                "$mainUrl/wp-content/plugins/player-logic/api.php",
-                requestBody = body,
-            ).parsedSafe<Response>()?.data?.sources?.map { res ->
-                println("Response src: ${res.src}")
-                println("Meta: $meta")
-                println("Iframe src: $iframe")
-                println("en: $en, iv: $iv")
-                callback.invoke(
-                    newExtractorLink(
-                        this.name,
-                        this.name,
-                        //res.src?.replace("/hh//", "/hh/$meta/") ?: return@map null,
-                        //Test Fix
-                        res.src?: return@map null,
-                        INFER_TYPE
-                    )
-                )
-            }
-        }
-
-        return true
-    }*/
     override suspend fun loadLinks(
     data: String,
     isCasting: Boolean,
@@ -184,26 +131,12 @@ class Hentaiheaven : MainAPI() {
 
     val en = parts[0]
     val iv = Base64.getEncoder().encodeToString(parts[1].toByteArray())
-
-    println("Meta: $meta")
-    println("Iframe src: $iframe")
-    println("Decoded: $decoded")
-    println("en: $en")
-    println("iv: $iv")
-    
-
-    /*
-    val body = FormBody.Builder()
-.addEncoded("action", "zarat_get_data_player_ajax")
-.addEncoded("a", en)
-.addEncoded("b", iv)
-.build()*/
-   val body = MultipartBody.Builder()
-.setType(MultipartBody.FORM)
-.addFormDataPart("action", "zarat_get_data_player_ajax")
-.addFormDataPart("a", en)
-.addFormDataPart("b", iv)
-.build()
+    val body = MultipartBody.Builder()
+    .setType(MultipartBody.FORM)
+    .addFormDataPart("action", "zarat_get_data_player_ajax")
+    .addFormDataPart("a", en)
+    .addFormDataPart("b", iv)
+    .build()
 
    val fycfUrl = BuildConfig.FYCF_ENDPOINT
    val FYCF_API = BuildConfig.FYCF_API
