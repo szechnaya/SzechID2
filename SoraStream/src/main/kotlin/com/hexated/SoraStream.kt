@@ -4,10 +4,12 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import com.hexated.SoraExtractor.invokeGomovies
 import com.hexated.SoraExtractor.invokeIdlix
 import com.hexated.SoraExtractor.invokeMapple
+import com.hexated.SoraExtractor.invokeVidfast
 import com.hexated.SoraExtractor.invokeVidlink
 import com.hexated.SoraExtractor.invokeVidsrc
 import com.hexated.SoraExtractor.invokeVidsrccc
 import com.hexated.SoraExtractor.invokeWatchsomuch
+import com.hexated.SoraExtractor.invokeWyzie
 import com.hexated.SoraExtractor.invokeXprime
 import com.lagradost.cloudstream3.*
 import com.lagradost.cloudstream3.LoadResponse.Companion.addTrailer
@@ -54,6 +56,8 @@ open class SoraStream : TmdbProvider() {
         const val watchSomuchAPI = "https://watchsomuch.tv"
         const val mappleAPI = "https://mapple.uk"
         const val vidlinkAPI = "https://vidlink.pro"
+        const val vidfastAPI = "https://vidfast.pro"
+        const val wyzieAPI = "https://sub.wyzie.ru"
 
         fun getType(t: String?): TvType {
             return when (t) {
@@ -303,7 +307,8 @@ open class SoraStream : TmdbProvider() {
                     res.season,
                     res.episode,
                     subtitleCallback,
-                    callback)
+                    callback
+                )
             },
             {
                 invokeVidsrc(
@@ -311,30 +316,28 @@ open class SoraStream : TmdbProvider() {
                     res.season,
                     res.episode,
                     subtitleCallback,
-                    callback)
-            },
-            {
-                invokeXprime(
-                    res.id,
-                    res.title,
-                    res.airedYear ?: res.year,
-                    res.season,
-                    res.episode,
-                    subtitleCallback,
-                    callback)
+                    callback
+                )
             },
             {
                 invokeWatchsomuch(
                     res.imdbId,
                     res.season,
                     res.episode,
-                    subtitleCallback)
+                    subtitleCallback
+                )
             },
             {
                 invokeMapple(res.id, res.season, res.episode, subtitleCallback, callback)
             },
             {
                 invokeVidlink(res.id, res.season, res.episode, callback)
+            },
+            {
+                invokeVidfast(res.id, res.season, res.episode, subtitleCallback, callback)
+            },
+            {
+                invokeWyzie(res.id, res.season, res.episode, subtitleCallback)
             }
         )
 

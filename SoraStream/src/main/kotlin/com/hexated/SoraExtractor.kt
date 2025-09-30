@@ -15,8 +15,6 @@ import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.RequestBody.Companion.toRequestBody
 import org.jsoup.Jsoup
 
-val session = Session(Requests().baseClient)
-
 object SoraExtractor : SoraStream() {
 
     suspend fun invokeGomovies(
@@ -409,39 +407,39 @@ object SoraExtractor : SoraStream() {
                     }
                 )
             },
-//            {
-//                val url = if (season == null) {
-//                    "$xprimeAPI/${servers.last()}?name=$title&fallback_year=$year"
-//                } else {
-//                    "$xprimeAPI/${servers.last()}?name=$title&fallback_year=$year&season=$season&episode=$episode"
-//                }
-//
-//                val sources = app.get(url).parsedSafe<PrimeboxSources>()
-//
-//                sources?.streams?.map { source ->
-//                    callback.invoke(
-//                        newExtractorLink(
-//                            serverName.last(),
-//                            serverName.last(),
-//                            source.value,
-//                            ExtractorLinkType.M3U8
-//                        ) {
-//                            this.referer = referer
-//                            this.quality = getQualityFromName(source.key)
-//                        }
-//                    )
-//                }
-//
-//                sources?.subtitles?.map { subtitle ->
-//                    subtitleCallback.invoke(
-//                        SubtitleFile(
-//                            subtitle.label ?: "",
-//                            subtitle.file ?: return@map
-//                        )
-//                    )
-//                }
-//
-//            }
+            {
+                val url = if (season == null) {
+                    "$xprimeAPI/${servers.last()}?name=$title&fallback_year=$year"
+                } else {
+                    "$xprimeAPI/${servers.last()}?name=$title&fallback_year=$year&season=$season&episode=$episode"
+                }
+
+                val sources = app.get(url).parsedSafe<PrimeboxSources>()
+
+                sources?.streams?.map { source ->
+                    callback.invoke(
+                        newExtractorLink(
+                            serverName.last(),
+                            serverName.last(),
+                            source.value,
+                            ExtractorLinkType.M3U8
+                        ) {
+                            this.referer = referer
+                            this.quality = getQualityFromName(source.key)
+                        }
+                    )
+                }
+
+                sources?.subtitles?.map { subtitle ->
+                    subtitleCallback.invoke(
+                        SubtitleFile(
+                            subtitle.label ?: "",
+                            subtitle.file ?: return@map
+                        )
+                    )
+                }
+
+            }
         )
     }
 
@@ -575,6 +573,84 @@ object SoraExtractor : SoraStream() {
                 this.referer = "$vidlinkAPI/"
             }
         )
+
+    }
+
+    suspend fun invokeVidfast(
+        tmdbId: Int?,
+        season: Int?,
+        episode: Int?,
+        subtitleCallback: (SubtitleFile) -> Unit,
+        callback: (ExtractorLink) -> Unit,
+    ) {
+        val module = "hezushon/e7b3cf8497ae580e7a703f996cf17ce48587cbd5/ev/9fdf613a9204683a789e4bfe9fd06da405e6ef36c4338b5baf14d0f2ea18f7a4"
+        val type = if (season == null) "movie" else "tv"
+        val url = if (season == null) {
+            "$vidfastAPI/$type/$tmdbId"
+        } else {
+            "$vidfastAPI/$type/$tmdbId/$season/$episode"
+        }
+
+        val res = app.get(
+            url, interceptor = WebViewResolver(
+                Regex("""$vidfastAPI/$module/"""),
+                timeout = 15_000L
+            )
+        ).text
+
+        tryParseJson<ArrayList<VidFastServers>>(res)?.filter { it.description?.contains("Original audio") == true }
+            ?.amapIndexed { index, server ->
+                val source = app.get("$vidfastAPI/$module/6rbZBh6h9A/${server.data}" , headers = mapOf(
+                    "X-Requested-With" to "XMLHttpRequest"
+                ), referer = "$vidfastAPI/").parsedSafe<VidFastSources>()
+
+                callback.invoke(
+                    newExtractorLink(
+                        "Vidfast",
+                        "Vidfast [${server.name}]",
+                        source?.url ?: return@amapIndexed,
+                        INFER_TYPE
+                    )
+                )
+
+                if(index == 1) {
+                    source.tracks?.map { subtitle ->
+                        subtitleCallback.invoke(
+                            SubtitleFile(
+                                subtitle.label ?: return@map,
+                                subtitle.file ?: return@map
+                            )
+                        )
+                    }
+                }
+
+            }
+
+
+    }
+
+    suspend fun invokeWyzie(
+        tmdbId: Int?,
+        season: Int?,
+        episode: Int?,
+        subtitleCallback: (SubtitleFile) -> Unit,
+    ) {
+        val url = if(season == null) {
+            "$wyzieAPI/search?id=$tmdbId"
+        } else {
+            "$wyzieAPI/search?id=$tmdbId&season=$season&episode=$episode"
+        }
+
+        val res = app.get(url).text
+
+        tryParseJson<ArrayList<WyzieSubtitle>>(res)?.map { subtitle ->
+            subtitleCallback.invoke(
+                SubtitleFile(
+                    subtitle.display ?: return@map,
+                    subtitle.url ?: return@map,
+                )
+            )
+        }
 
     }
 
