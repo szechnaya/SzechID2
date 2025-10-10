@@ -167,11 +167,18 @@ class Hentaiheaven : MainAPI() {
             println("Response src: $src")
             
             callback.invoke(
+                /*
                 newExtractorLink(
                     this.name,
                     this.name,
                     src,
                     INFER_TYPE
+                )*/
+                M3u8Helper.generateM3u8(
+                    this.name,
+                    src,
+                    referer = "$mainUrl/",
+                    headers = mapOf("Accept" to "*/*", "Origin" to mainUrl)
                 )
             )
        }
