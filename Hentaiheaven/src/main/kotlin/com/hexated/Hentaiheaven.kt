@@ -144,39 +144,39 @@ class Hentaiheaven : MainAPI() {
        "$fycfUrl/?token=$FYCF_API&url=$mainUrl/wp-content/plugins/player-logic/api.php",
        requestBody = body,
        timeout = 60_000
-).parsedSafe<Response>()
-
-if (response == null) {
-    println("Response is null or failed to parse")
-    return false
-}
-
-val sources = response.data?.sources
-if (sources.isNullOrEmpty()) {
-    println("No sources found in response $response")
-    return false
-}
-
-sources.forEach { res ->
-    val src = res.src
-    if (src == null) {
-        println("Source is null, skipping")
-        return@forEach
-}
-
-    println("Response src: $src")
-
-    callback.invoke(
-        newExtractorLink(
-            this.name,
-            this.name,
-            src,
-            INFER_TYPE
-)
-)
-}
-
-    return true
+       ).parsedSafe<Response>()
+       
+       if (response == null) {
+            println("Response is null or failed to parse")
+            return false
+       }
+       
+       val sources = response.data?.sources
+       if (sources.isNullOrEmpty()) {
+            println("No sources found in response $response")
+            return false
+       }
+       
+       sources.forEach { res ->
+            val src = res.src
+            if (src == null) {
+                println("Source is null, skipping")
+                return@forEach
+            }
+            
+            println("Response src: $src")
+            
+            callback.invoke(
+                newExtractorLink(
+                    this.name,
+                    this.name,
+                    src,
+                    INFER_TYPE
+                )
+            )
+       }
+       
+       return true
 }
 
     data class Response(
