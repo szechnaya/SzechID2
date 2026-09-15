@@ -1,7 +1,7 @@
 import com.android.build.gradle.BaseExtension
 import com.lagradost.cloudstream3.gradle.CloudstreamExtension
-import org.gradle.api.tasks.Delete
 import org.gradle.api.Project
+import org.gradle.api.tasks.Delete
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
@@ -81,15 +81,45 @@ subprojects {
     }
 
     dependencies {
-        implementation("com.lagradost:cloudstream3:pre-release")
+        add(
+            "implementation",
+            "com.lagradost:cloudstream3:pre-release"
+        )
 
-        implementation(kotlin("stdlib"))
-        implementation("com.github.Blatzar:NiceHttp:0.4.13")
-        implementation("org.jsoup:jsoup:1.18.3")
-        implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.16.1")
-        implementation("io.karn:khttp-android:0.1.2")
-        implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.0")
-        implementation("org.mozilla:rhino:1.7.14")
+        add(
+            "implementation",
+            kotlin("stdlib")
+        )
+
+        add(
+            "implementation",
+            "com.github.Blatzar:NiceHttp:0.4.13"
+        )
+
+        add(
+            "implementation",
+            "org.jsoup:jsoup:1.18.3"
+        )
+
+        add(
+            "implementation",
+            "com.fasterxml.jackson.module:jackson-module-kotlin:2.16.1"
+        )
+
+        add(
+            "implementation",
+            "io.karn:khttp-android:0.1.2"
+        )
+
+        add(
+            "implementation",
+            "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.0"
+        )
+
+        add(
+            "implementation",
+            "org.mozilla:rhino:1.7.14"
+        )
     }
 }
 
