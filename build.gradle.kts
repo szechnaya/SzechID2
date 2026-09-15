@@ -1,6 +1,9 @@
-import com.lagradost.cloudstream3.gradle.CloudstreamExtension
 import com.android.build.gradle.BaseExtension
+import com.lagradost.cloudstream3.gradle.CloudstreamExtension
+import org.gradle.api.tasks.Delete
+import org.gradle.api.Project
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 buildscript {
     repositories {
@@ -24,11 +27,17 @@ allprojects {
     }
 }
 
-fun Project.cloudstream(configuration: CloudstreamExtension.() -> Unit) =
-    extensions.getByName<CloudstreamExtension>("cloudstream").configuration()
+fun Project.cloudstream(
+    configuration: CloudstreamExtension.() -> Unit
+) = extensions
+    .getByName<CloudstreamExtension>("cloudstream")
+    .configuration()
 
-fun Project.android(configuration: BaseExtension.() -> Unit) =
-    extensions.getByName<BaseExtension>("android").configuration()
+fun Project.android(
+    configuration: BaseExtension.() -> Unit
+) = extensions
+    .getByName<BaseExtension>("android")
+    .configuration()
 
 subprojects {
     apply(plugin = "com.android.library")
@@ -40,6 +49,7 @@ subprojects {
             System.getenv("GITHUB_REPOSITORY")
                 ?: "https://github.com/hexated/cloudstream-extensions-hexated"
         )
+
         authors = listOf("Hexated")
     }
 
@@ -58,14 +68,10 @@ subprojects {
         }
     }
 
-    // Create the custom configuration used by CloudStream.
-    configurations {
-        create("apk")
-    }
-
-    tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
+    tasks.withType<KotlinCompile>().configureEach {
         compilerOptions {
             jvmTarget.set(JvmTarget.JVM_1_8)
+
             freeCompilerArgs.addAll(
                 "-Xno-call-assertions",
                 "-Xno-param-assertions",
@@ -75,10 +81,7 @@ subprojects {
     }
 
     dependencies {
-        val apk by configurations
-        val implementation by configurations
-
-        apk("com.lagradost:cloudstream3:pre-release")
+        implementation("com.lagradost:cloudstream3:pre-release")
 
         implementation(kotlin("stdlib"))
         implementation("com.github.Blatzar:NiceHttp:0.4.13")
