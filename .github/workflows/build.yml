@@ -1,22 +1,21 @@
 name: Build
 
-# https://docs.github.com/en/actions/learn-github-actions/workflow-syntax-for-github-actions#concurrency
 concurrency:
   group: "build"
   cancel-in-progress: true
 
 on:
+  workflow_dispatch: 
   push:
     branches:
-      # choose your default branch
       - master
-      - main
     paths-ignore:
       - '*.md'
 
 jobs:
   build:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4.2.2
@@ -39,16 +38,21 @@ jobs:
           java-version: 17
 
       - name: Setup Android SDK
-        uses: android-actions/setup-android@v3.2.2
-      
+        uses: android-actions/setup-android@v4
+        with:
+          packages: |
+            platform-tools
+            platforms;android-35
+            build-tools;35.0.0
+
       - name: Access Secrets
         env:
-            FYCF_API: ${{ secrets.FYCF_API }}
-            FYCF_ENDPOINT: ${{ secrets.FYCF_ENDPOINT }}
+          FYCF_API: ${{ secrets.FYCF_API }}
+          FYCF_ENDPOINT: ${{ secrets.FYCF_ENDPOINT }}
         run: |
-            cd $GITHUB_WORKSPACE/src
-            echo FYCF_API=$FYCF_API >> local.properties
-            echo FYCF_ENDPOINT=$FYCF_ENDPOINT >> local.properties
+          cd $GITHUB_WORKSPACE/src
+          echo "FYCF_API=$FYCF_API" >> local.properties
+          echo "FYCF_ENDPOINT=$FYCF_ENDPOINT" >> local.properties
 
       - name: Build Plugins
         run: |
@@ -64,5 +68,5 @@ jobs:
           git config --local user.email "actions@github.com"
           git config --local user.name "GitHub Actions"
           git add .
-          git commit --amend -m "Build $GITHUB_SHA" || exit 0   # do not error if nothing to commit
+          git commit --amend -m "Build $GITHUB_SHA" || exit 0
           git push --force
