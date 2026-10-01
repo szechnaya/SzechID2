@@ -41,7 +41,6 @@ fun Project.android(
 
 subprojects {
     apply(plugin = "com.android.library")
-    apply(plugin = "kotlin-android")
     apply(plugin = "com.lagradost.cloudstream3.gradle")
 
     cloudstream {
@@ -55,6 +54,7 @@ subprojects {
 
     android {
         namespace = "com.hexated"
+        compileSdk = 36
 
         defaultConfig {
             minSdk = 21
