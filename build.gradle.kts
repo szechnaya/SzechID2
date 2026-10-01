@@ -1,21 +1,23 @@
-import com.android.build.gradle.BaseExtension
+import com.android.build.api.dsl.LibraryExtension
 import com.lagradost.cloudstream3.gradle.CloudstreamExtension
-import org.gradle.api.Project
-import org.gradle.api.tasks.Delete
+import org.gradle.api.plugins.JavaPluginExtension
+import org.gradle.kotlin.dsl.register
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+import org.jetbrains.kotlin.gradle.tasks.KotlinJvmCompile
 
 buildscript {
     repositories {
         google()
         mavenCentral()
+        // Shitpack repo which contains our tools and dependencies
         maven("https://jitpack.io")
     }
 
     dependencies {
-        classpath("com.android.tools.build:gradle:8.7.3")
-        classpath("com.github.recloudstream:gradle:-SNAPSHOT")
-        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:2.1.0")
+        classpath("com.android.tools.build:gradle:9.1.1")
+        // Cloudstream gradle plugin which makes everything work and builds plugins
+        classpath("com.github.recloudstream:gradle:81b1d424d2")
+        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:2.3.21")
     }
 }
 
@@ -27,27 +29,29 @@ allprojects {
     }
 }
 
-fun Project.cloudstream(
-    configuration: CloudstreamExtension.() -> Unit
-) = extensions
-    .getByName<CloudstreamExtension>("cloudstream")
-    .configuration()
+fun Project.cloudstream(configuration: CloudstreamExtension.() -> Unit) = extensions.getByName<CloudstreamExtension>("cloudstream").configuration()
 
-fun Project.android(
-    configuration: BaseExtension.() -> Unit
-) = extensions
-    .getByName<BaseExtension>("android")
-    .configuration()
+fun Project.android(configuration: LibraryExtension.() -> Unit) {
+    extensions.getByName<LibraryExtension>("android").apply {
+        project.extensions.findByType(JavaPluginExtension::class.java)?.apply {
+            // Use Java 17 toolchain even if a higher JDK runs the build.
+            // We still use Java 8 for now which higher JDKs have deprecated.
+            toolchain {
+                languageVersion.set(JavaLanguageVersion.of(17))
+            }
+        }
+
+        configuration()
+    }
+}
 
 subprojects {
     apply(plugin = "com.android.library")
     apply(plugin = "com.lagradost.cloudstream3.gradle")
 
     cloudstream {
-        setRepo(
-            System.getenv("GITHUB_REPOSITORY")
-                ?: "https://github.com/hexated/cloudstream-extensions-hexated"
-        )
+        // when running through github workflow, GITHUB_REPOSITORY should contain current repository name
+        setRepo(System.getenv("GITHUB_REPOSITORY") ?: "https://github.com/hexated/cloudstream-extensions-hexated")
 
         authors = listOf("Hexated")
     }
@@ -58,68 +62,50 @@ subprojects {
 
         defaultConfig {
             minSdk = 21
-            compileSdkVersion(35)
-            targetSdk = 35
+        }
+
+        lint {
+            targetSdk = 36
         }
 
         compileOptions {
-            sourceCompatibility = JavaVersion.VERSION_1_8
-            targetCompatibility = JavaVersion.VERSION_1_8
+            sourceCompatibility = JavaVersion.VERSION_11
+            targetCompatibility = JavaVersion.VERSION_11
         }
-    }
 
-    tasks.withType<KotlinCompile>().configureEach {
-        compilerOptions {
-            jvmTarget.set(JvmTarget.JVM_1_8)
-
-            freeCompilerArgs.addAll(
-                "-Xno-call-assertions",
-                "-Xno-param-assertions",
-                "-Xno-receiver-assertions"
-            )
+        //noinspection WrongGradleMethod
+        tasks.withType<KotlinJvmCompile> {
+            compilerOptions {
+                jvmTarget.set(JvmTarget.JVM_11)
+                freeCompilerArgs.addAll(
+                    "-Xno-call-assertions",
+                    "-Xno-param-assertions",
+                    "-Xno-receiver-assertions",
+                    "-Xannotation-default-target=param-property"
+                )
+            }
         }
     }
 
     dependencies {
-        add(
-            "implementation",
-            "com.lagradost:cloudstream3:pre-release"
-        )
+        val implementation by configurations
+        val cloudstream by configurations
 
-        add(
-            "implementation",
-            kotlin("stdlib")
-        )
+        // Stubs for all Cloudstream classes
+        cloudstream("com.lagradost:cloudstream3:pre-release")
 
-        add(
-            "implementation",
-            "com.github.Blatzar:NiceHttp:0.4.13"
-        )
+        // these dependencies can include any of those which are added by the app,
+        // but you dont need to include any of them if you dont need them
+        // https://github.com/recloudstream/cloudstream/blob/master/app/build.gradle
 
-        add(
-            "implementation",
-            "org.jsoup:jsoup:1.18.3"
-        )
+        implementation(kotlin("stdlib")) // adds standard kotlin features, like listOf, mapOf etc
+        implementation("com.github.Blatzar:NiceHttp:0.4.18") // http library
+        implementation("org.jsoup:jsoup:1.18.3") // html parser
+        implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.16.1")
+        implementation("io.karn:khttp-android:0.1.2")
+        implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.0")
+        implementation("org.mozilla:rhino:1.7.14") //run JS
 
-        add(
-            "implementation",
-            "com.fasterxml.jackson.module:jackson-module-kotlin:2.16.1"
-        )
-
-        add(
-            "implementation",
-            "io.karn:khttp-android:0.1.2"
-        )
-
-        add(
-            "implementation",
-            "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.0"
-        )
-
-        add(
-            "implementation",
-            "org.mozilla:rhino:1.7.14"
-        )
     }
 }
 
