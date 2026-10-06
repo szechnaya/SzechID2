@@ -26,8 +26,8 @@ jobs:
       - name: Checkout builds
         uses: actions/checkout@v4.2.2
         with:
-          ref: "builds"
-          path: "builds"
+          ref: "dev_builds"
+          path: "dev_builds"
 
       - name: Clean old builds
         run: rm $GITHUB_WORKSPACE/builds/*.cs3 || true
@@ -57,12 +57,12 @@ jobs:
           cd $GITHUB_WORKSPACE/src
           chmod +x gradlew
           ./gradlew make makePluginsJson
-          cp **/build/*.cs3 $GITHUB_WORKSPACE/builds
-          cp build/plugins.json $GITHUB_WORKSPACE/builds
+          cp **/build/*.cs3 $GITHUB_WORKSPACE/dev_builds
+          cp build/plugins.json $GITHUB_WORKSPACE/dev_builds
 
       - name: Push builds
         run: |
-          cd $GITHUB_WORKSPACE/builds
+          cd $GITHUB_WORKSPACE/dev_builds
           git config --local user.email "actions@github.com"
           git config --local user.name "GitHub Actions"
           git add .

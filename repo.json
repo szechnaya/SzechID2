@@ -3,6 +3,6 @@
     "description": "Plugin Untuk Situs Indonesia",
     "manifestVersion": 1,
     "pluginLists": [
-        "https://raw.githubusercontent.com/szechnaya/SzechID2/builds/plugins.json"
+        "https://raw.githubusercontent.com/szechnaya/SzechID2/dev_builds/plugins.json"
     ]
 }
