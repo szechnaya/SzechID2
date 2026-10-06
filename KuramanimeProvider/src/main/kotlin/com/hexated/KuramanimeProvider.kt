@@ -3,22 +3,26 @@ package com.hexated
 import com.lagradost.cloudstream3.*
 import com.lagradost.cloudstream3.LoadResponse.Companion.addAniListId
 import com.lagradost.cloudstream3.LoadResponse.Companion.addMalId
+import com.lagradost.cloudstream3.amap
 import com.lagradost.cloudstream3.utils.ExtractorLink
 import com.lagradost.cloudstream3.utils.INFER_TYPE
 import com.lagradost.cloudstream3.utils.Qualities
 import com.lagradost.cloudstream3.utils.loadExtractor
 import com.lagradost.cloudstream3.utils.newExtractorLink
+import kotlinx.coroutines.delay
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Element
+import java.util.concurrent.TimeUnit
 
 class KuramanimeProvider : MainAPI() {
-    override var mainUrl = "https://kuramanime.club"
+    override var mainUrl = "https://v9.kuramanime.blog"
     override var name = "Kuramanime"
     override val hasQuickSearch = false
     override val hasMainPage = true
     override var lang = "id"
     override var sequentialMainPage = true
     override val hasDownloadSupport = true
+    var authorization: String? = "kJuHHkaqcBFXiGMHQf6bJw8YAyDcwGD8Ur"
     override val supportedTypes = setOf(
         TvType.Anime,
         TvType.AnimeMovie,
@@ -114,7 +118,7 @@ class KuramanimeProvider : MainAPI() {
 
         val episodes = mutableListOf<Episode>()
 
-        for (i in 1..30) {
+        for (i in 1..50) {
             val doc = app.get("$url?page=$i").document
             val eps = Jsoup.parse(doc.select("#episodeLists").attr("data-content"))
                 .select("a.btn.btn-sm.btn-danger")
@@ -167,11 +171,14 @@ class KuramanimeProvider : MainAPI() {
         subtitleCallback: (SubtitleFile) -> Unit,
         callback: (ExtractorLink) -> Unit
     ) {
-        val document = app.get(
+        val request = app.post(
             url,
+            data = mapOf("authorization" to getAuth()),
             headers = headers,
             cookies = cookies
-        ).document
+        )
+        delay(2000)
+        val document = request.document
         document.select("video#player > source").map {
             val link = fixUrl(it.attr("src"))
             val quality = it.attr("size").toIntOrNull()
@@ -182,18 +189,18 @@ class KuramanimeProvider : MainAPI() {
                     link,
                     INFER_TYPE
                 ) {
-                    this.headers = mapOf(
-                        "Accept" to "video/webm,video/ogg,video/*;q=0.9,application/ogg;q=0.7,audio/*;q=0.6,*/*;q=0.5",
-                        "Range" to "bytes=0-",
-                        "Sec-Fetch-Dest" to "video",
-                        "Sec-Fetch-Mode" to "no-cors",
-                    )
+//                    this.headers = mapOf(
+//                        "Accept" to "video/webm,video/ogg,video/*;q=0.9,application/ogg;q=0.7,audio/*;q=0.6,*/*;q=0.5",
+//                        "Range" to "bytes=0-",
+//                        "Sec-Fetch-Dest" to "video",
+//                        "Sec-Fetch-Mode" to "no-cors",
+//                    )
                     this.quality = quality ?: Qualities.Unknown.value
                 }
             )
         }
         if (server == "kuramadrive") {
-            document.select("div#animeDownloadLink a").apmap {
+            document.select("div#animeDownloadLink a").amap {
                 loadExtractor(it.attr("href"), "$mainUrl/", subtitleCallback, callback)
             }
         }
@@ -211,8 +218,7 @@ class KuramanimeProvider : MainAPI() {
         cookies = req.cookies
 
         val token = res.selectFirst("meta[name=csrf-token]")?.attr("content") ?: return false
-        val dataKps =
-            res.selectFirst("div.col-lg-12.mt-3")?.attributes()?.last()?.value ?: return false
+        val dataKps = res.selectFirst("div.col-lg-12.mt-3")?.attr("data-kk") ?: return false
 
         val assets = getAssets(dataKps)
 
@@ -224,30 +230,36 @@ class KuramanimeProvider : MainAPI() {
             "X-Requested-With" to "XMLHttpRequest",
         )
 
-        val tokenKey = app.get(
+        val tokenRes = app.get(
             "$mainUrl/${assets.MIX_PREFIX_AUTH_ROUTE_PARAM}${assets.MIX_AUTH_ROUTE_PARAM}",
             headers = headers,
             cookies = cookies
-        ).text
+        )
+
+        val tokenKey = tokenRes.text
+        cookies = tokenRes.cookies
 
         headers = mapOf(
             "X-CSRF-TOKEN" to token,
             "X-Requested-With" to "XMLHttpRequest",
         )
 
-        res.select("select#changeServer option").apmap { source ->
+        res.select("select#changeServer option").amap { source ->
             val server = source.attr("value")
             val link =
                 "$data?${assets.MIX_PAGE_TOKEN_KEY}=$tokenKey&${assets.MIX_STREAM_SERVER_KEY}=$server"
             if (server.contains(Regex("(?i)kuramadrive|archive"))) {
                 invokeLocalSource(link, server, headers, subtitleCallback, callback)
             } else {
-                app.get(
+                val request = app.post(
                     link,
+                    data = mapOf("authorization" to getAuth()),
                     referer = data,
                     headers = headers,
                     cookies = cookies
-                ).document.select("div.iframe-container iframe").attr("src").let { videoUrl ->
+                )
+                delay(2000)
+                request.document.select("div.iframe-container iframe").attr("src").let { videoUrl ->
                     loadExtractor(fixUrl(videoUrl), "$mainUrl/", subtitleCallback, callback)
                 }
             }
@@ -276,6 +288,21 @@ class KuramanimeProvider : MainAPI() {
             MIX_PAGE_TOKEN_KEY,
             MIX_STREAM_SERVER_KEY
         )
+    }
+
+    suspend fun getAuth(): String {
+        return authorization ?: fetchAuth().also { authorization = it }
+    }
+
+    suspend fun fetchAuth(): String {
+        val url = "$mainUrl/storage/leviathan.js?v=512"
+        val res = app.get(url).text
+        val auth = Regex("""=\s*\[(.*?)]""").find(res)?.groupValues?.get(1)
+            ?.split(",")
+            ?.map { it.trim().removeSurrounding("'").removeSurrounding("\"") }
+            ?: throw ErrorLoadingException()
+
+        return "${auth.last()}${auth[9]}${auth[1]}${auth.first()}i"
     }
 
     private fun randomId(length: Int = 6): String {

@@ -1,9 +1,9 @@
 // use an integer for version numbers
-version = 1
+version = 3
 
 
 cloudstream {
-    language = "en"
+    language = "id"
     // All of these properties are optional, you can safely remove them
 
     description = "Live Stream"
