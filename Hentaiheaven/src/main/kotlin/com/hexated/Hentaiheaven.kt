@@ -27,7 +27,7 @@ class Hentaiheaven : MainAPI() {
         request: MainPageRequest
     ): HomePageResponse {
         val basePath = request.data
-
+    
         val url = if (page == 1) {
             "$mainUrl$basePath"
         } else {
@@ -37,30 +37,68 @@ class Hentaiheaven : MainAPI() {
                 "$mainUrl$basePath?page=$page"
             }
         }
-
+    
         val html = app.get(url).text
-
-        val pattern = Regex(
-            """\{"id":(\d+).*?"slug":"([^"]+)".*?"title":\{"rendered":"(.*?)"\}.*?"vraven_remote_thumbnail":"([^"]+)"""",
-            setOf(RegexOption.DOT_MATCHES_ALL)
-        )
-
-        val home = pattern.findAll(html)
-            .mapNotNull { match ->
-                val slug = match.groupValues[2]
-
-                val title = match.groupValues[3]
+    
+        val ids = Regex(
+            """"id":(\d+)"""
+        ).findAll(html)
+            .map { it.groupValues[1] }
+            .toList()
+    
+        val slugs = Regex(
+            """"slug":"([^"]+)""""
+        ).findAll(html)
+            .map { it.groupValues[1] }
+            .toList()
+    
+        val titles = Regex(
+            """"title":\{"rendered":"([^"]+)""""
+        ).findAll(html)
+            .map {
+                it.groupValues[1]
                     .replace("\\/", "/")
                     .replace("\\u0026", "&")
-
-                newAnimeSearchResponse(
-                    title,
-                    "$mainUrl/watch/$slug/",
-                    TvType.NSFW
-                )
             }
             .toList()
-
+    
+        val thumbnails = Regex(
+            """"vraven_remote_thumbnail":"([^"]+)""""
+        ).findAll(html)
+            .map {
+                it.groupValues[1]
+                    .replace("\\/", "/")
+            }
+            .toList()
+    
+        println("[$name][MAIN] HTML size = ${html.length}")
+        println("[$name][MAIN] IDs = ${ids.size}")
+        println("[$name][MAIN] Slugs = ${slugs.size}")
+        println("[$name][MAIN] Titles = ${titles.size}")
+        println("[$name][MAIN] Thumbnails = ${thumbnails.size}")
+    
+        val count = minOf(
+            slugs.size,
+            titles.size
+        )
+    
+        val home = (0 until count).mapNotNull { index ->
+            val slug = slugs[index]
+            val title = titles[index]
+    
+            println(
+                "[$name][MAIN] [$index] $title -> $slug"
+            )
+    
+            newAnimeSearchResponse(
+                title,
+                "$mainUrl/watch/$slug/",
+                TvType.NSFW
+            )
+        }
+    
+        println("[$name][MAIN] Final results = ${home.size}")
+    
         return newHomePageResponse(
             request.name,
             home
