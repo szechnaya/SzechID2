@@ -30,7 +30,7 @@ class Hentaiheaven : MainAPI() {
             if (request.data.contains("?")) {
                 "$mainUrl/watch/page/$page/${request.data}"
             } else {
-                "$mainUrl/watch/page/$page/${request.data}"
+                "$mainUrl/watch/page/$page/?${request.data}"
             }
         }
 
