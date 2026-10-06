@@ -44,67 +44,66 @@ class Hentaiheaven : MainAPI() {
         )
             .findAll(html)
             .joinToString("\n") { it.groupValues[1] }
-    
+            .replace("\\\"", "\"")
+            .replace("\\\\", "\\")
+        
         println("[$name][MAIN] HTML size = ${html.length}")
         println("[$name][MAIN] Flight size = ${flight.length}")
         println("[$name][MAIN] Flight matches = ${Regex("""self\.__next_f\.push""").findAll(html).count()}")
-    
+        
         val ids = Regex(
             """"id":(\d+)"""
         ).findAll(flight)
             .map { it.groupValues[1] }
             .toList()
-    
+        
         val slugs = Regex(
             """"slug":"([^"]+)"""
         ).findAll(flight)
             .map { it.groupValues[1] }
             .toList()
-    
+        
         val titles = Regex(
-            """"title":\{"rendered":"([^"]+)"""
+            """"title":\{"rendered":"([^"]+)""""
         ).findAll(flight)
             .map { it.groupValues[1] }
             .toList()
-    
+        
         val thumbnails = Regex(
             """"vraven_remote_thumbnail":"([^"]+)"""
         ).findAll(flight)
             .map { it.groupValues[1] }
             .toList()
-    
+        
         println("[$name][MAIN] IDs = ${ids.size}")
         println("[$name][MAIN] Slugs = ${slugs.size}")
         println("[$name][MAIN] Titles = ${titles.size}")
         println("[$name][MAIN] Thumbnails = ${thumbnails.size}")
-    
+        
         val count = minOf(
             slugs.size,
             titles.size
         )
-    
+        
         val results = (0 until count).map { index ->
             val slug = slugs[index]
             val title = titles[index]
-    
-            println(
-                "[$name][MAIN] [$index] $title -> $slug"
-            )
-    
+        
+            println("[$name][MAIN] [$index] $title -> $slug")
+        
             newAnimeSearchResponse(
                 title,
                 "$mainUrl/watch/$slug/",
                 TvType.NSFW
             )
         }
-    
+        
         println("[$name][MAIN] Final results = ${results.size}")
-    
+        
         return newHomePageResponse(
             request.name,
             results
         )
-    }
 
     override suspend fun loadLinks(
         data: String,
