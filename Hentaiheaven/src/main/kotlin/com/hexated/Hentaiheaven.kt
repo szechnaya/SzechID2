@@ -46,84 +46,122 @@ class Hentaiheaven : MainAPI() {
             .replace("\\\"", "\"")
             .replace("\\\\", "\\")
 
-        println("[$name][MAIN] URL = $url")
-        println("[$name][MAIN] HTML size = ${html.length}")
-        println("[$name][MAIN] Flight size = ${flight.length}")
-        println(
-            "[$name][MAIN] Flight matches = ${
-                Regex("""self\.__next_f\.push""")
-                    .findAll(html)
-                    .count()
-            }"
-        )
-
-        val ids = Regex(
-            """"id":(\d+)"""
-        )
-            .findAll(flight)
-            .map {
-                it.groupValues[1]
-            }
-            .toList()
-
         val slugs = Regex(
             """"slug":"([^"]+)"""
         )
             .findAll(flight)
-            .map {
-                it.groupValues[1]
-            }
+            .map { it.groupValues[1] }
             .toList()
 
         val titles = Regex(
             """"title":\{"rendered":"([^"]+)"""
         )
             .findAll(flight)
-            .map {
-                it.groupValues[1]
-            }
+            .map { it.groupValues[1] }
             .toList()
 
         val thumbnails = Regex(
             """"vraven_remote_thumbnail":"([^"]+)"""
         )
             .findAll(flight)
-            .map {
-                it.groupValues[1]
-            }
+            .map { it.groupValues[1] }
             .toList()
-
-        println("[$name][MAIN] IDs = ${ids.size}")
-        println("[$name][MAIN] Slugs = ${slugs.size}")
-        println("[$name][MAIN] Titles = ${titles.size}")
-        println("[$name][MAIN] Thumbnails = ${thumbnails.size}")
 
         val count = minOf(
             slugs.size,
-            titles.size
+            titles.size,
+            thumbnails.size
         )
 
         val results = (0 until count).map { index ->
             val slug = slugs[index]
             val title = titles[index]
-
-            println(
-                "[$name][MAIN] [$index] $title -> $slug"
-            )
+                .replace("\\\"", "\"")
+            val thumbnail = thumbnails[index]
 
             newAnimeSearchResponse(
                 title,
                 "$mainUrl/watch/$slug/",
                 TvType.NSFW
-            )
+            ).apply {
+                posterUrl = "https://img.hentaihaven.xxx/$thumbnail"
+            }
         }
-
-        println("[$name][MAIN] Final results = ${results.size}")
 
         return newHomePageResponse(
             request.name,
             results
         )
+    }
+
+    override suspend fun load(url: String): LoadResponse? {
+        val slug = url
+            .substringAfter("/watch/")
+            .trimEnd('/')
+            .substringBefore("/episode-")
+
+        val html = app.get(url).text
+
+        val title = Regex(
+            """"title":\{"rendered":"([^"]+)"""
+        )
+            .find(html)
+            ?.groupValues
+            ?.getOrNull(1)
+            ?.replace("\\\"", "\"")
+            ?: slug
+                .replace("-", " ")
+                .replaceFirstChar { it.uppercase() }
+
+        val episodes = mutableListOf<Episode>()
+
+        for (episodeNumber in 1..100) {
+            val episodeUrl =
+                "$mainUrl/watch/$slug/episode-$episodeNumber/"
+
+            val response = app.get(
+                episodeUrl,
+                timeout = 10
+            )
+
+            if (!response.isSuccessful) {
+                break
+            }
+
+            if (!response.url.toString().contains(
+                    "/watch/$slug/episode-$episodeNumber/"
+                )
+            ) {
+                break
+            }
+
+            episodes.add(
+                newEpisode(
+                    episodeUrl,
+                    episodeNumber
+                )
+            )
+        }
+
+        if (episodes.isEmpty()) {
+            episodes.add(
+                newEpisode(
+                    url,
+                    1
+                )
+            )
+        }
+
+        return newAnimeLoadResponse(
+            title,
+            url,
+            TvType.NSFW
+        ) {
+            addEpisodes(
+                DubStatus.Subbed,
+                episodes
+            )
+        }
     }
 
     override suspend fun loadLinks(
