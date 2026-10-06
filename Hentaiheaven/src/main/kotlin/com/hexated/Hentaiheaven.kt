@@ -20,15 +20,19 @@ class Hentaiheaven : MainAPI() {
         TvType.NSFW
     )
 
+    // =========================================================
+    // MAIN PAGE
+    // =========================================================
+
     override val mainPage = mainPageOf(
-        "?m_orderby=new-manga" to "New",
-        "?m_orderby=views" to "Most Views",
-        "?m_orderby=rating" to "Rating",
-        "?m_orderby=alphabet" to "A-Z",
+        "/watch/" to "New",
+        "/watch/?sort=views" to "Most Views",
+        "/watch/?sort=rating" to "Rating",
+        "/watch/?sort=az" to "A-Z",
     )
 
     // =========================================================
-    // DEBUG HELPER
+    // DEBUG
     // =========================================================
 
     private fun debug(tag: String, message: String) {
@@ -46,13 +50,34 @@ class Hentaiheaven : MainAPI() {
 
         debug("MAIN_PAGE", "========================================")
         debug("MAIN_PAGE", "getMainPage() called")
-        debug("MAIN_PAGE", "page      = $page")
-        debug("MAIN_PAGE", "request   = $request")
-        debug("MAIN_PAGE", "name      = ${request.name}")
-        debug("MAIN_PAGE", "data      = ${request.data}")
-        debug("MAIN_PAGE", "mainUrl   = $mainUrl")
+        debug("MAIN_PAGE", "page    = $page")
+        debug("MAIN_PAGE", "name    = ${request.name}")
+        debug("MAIN_PAGE", "data    = ${request.data}")
+        debug("MAIN_PAGE", "mainUrl = $mainUrl")
 
-        val url = "$mainUrl/page/$page/${request.data}"
+        /*
+         * Page 1:
+         *   /watch/
+         *   /watch/?sort=views
+         *
+         * Page > 1:
+         *   sementara menggunakan ?page=X
+         *
+         * Ini sengaja dibuat mudah diubah setelah kita
+         * melihat struktur pagination situs.
+         */
+
+        val basePath = request.data
+
+        val url = if (page == 1) {
+            "$mainUrl$basePath"
+        } else {
+            if (basePath.contains("?")) {
+                "$mainUrl$basePath&page=$page"
+            } else {
+                "$mainUrl$basePath?page=$page"
+            }
+        }
 
         debug("MAIN_PAGE", "Request URL: $url")
 
@@ -61,8 +86,8 @@ class Hentaiheaven : MainAPI() {
             val response = app.get(url)
 
             debug("MAIN_PAGE", "HTTP request completed")
-            debug("MAIN_PAGE", "Response URL: ${response.url}")
             debug("MAIN_PAGE", "Status: ${response.code}")
+            debug("MAIN_PAGE", "Response URL: ${response.url}")
 
             val document = response.document
 
@@ -71,50 +96,151 @@ class Hentaiheaven : MainAPI() {
                 "Document title: ${document.title()}"
             )
 
-            val selector =
-                "div.page-listing-item div.col-6.col-md-zarat.badge-pos-1"
-
-            debug("MAIN_PAGE", "Selector: $selector")
-
-            val elements = document.select(selector)
+            // -------------------------------------------------
+            // DEBUG STRUCTURE
+            // -------------------------------------------------
 
             debug(
                 "MAIN_PAGE",
-                "Matched elements: ${elements.size}"
+                "Total div: ${document.select("div").size}"
             )
 
-            val home = elements.mapIndexedNotNull { index, element ->
+            debug(
+                "MAIN_PAGE",
+                "Total article: ${document.select("article").size}"
+            )
 
-                debug(
-                    "MAIN_PAGE",
-                    "Parsing item #$index"
-                )
+            debug(
+                "MAIN_PAGE",
+                "Total li: ${document.select("li").size}"
+            )
+
+            debug(
+                "MAIN_PAGE",
+                "Total a: ${document.select("a").size}"
+            )
+
+            debug(
+                "MAIN_PAGE",
+                "page-listing-item: ${
+                    document.select("div.page-listing-item").size
+                }"
+            )
+
+            debug(
+                "MAIN_PAGE",
+                "c-tabs-item: ${
+                    document.select("div.c-tabs-item").size
+                }"
+            )
+
+            debug(
+                "MAIN_PAGE",
+                "col-6.col-md-zarat: ${
+                    document.select("div.col-6.col-md-zarat").size
+                }"
+            )
+
+            debug(
+                "MAIN_PAGE",
+                "listing-chapters_wrap: ${
+                    document.select("div.listing-chapters_wrap").size
+                }"
+            )
+
+            // -------------------------------------------------
+            // OLD SELECTOR
+            // -------------------------------------------------
+
+            val oldSelector =
+                "div.page-listing-item div.col-6.col-md-zarat.badge-pos-1"
+
+            val oldElements =
+                document.select(oldSelector)
+
+            debug(
+                "MAIN_PAGE",
+                "OLD selector [$oldSelector] = ${oldElements.size}"
+            )
+
+            // -------------------------------------------------
+            // TRY COMMON SELECTORS
+            // -------------------------------------------------
+
+            val selectors = listOf(
+                "div.col-6.col-md-zarat",
+                "div.page-listing-item .row > div",
+                "div.c-tabs-item__content",
+                "div.c-tabs-item",
+                "article",
+                ".page-listing-item",
+                ".c-tabs-item__content",
+                ".item-summary",
+                ".item-thumb"
+            )
+
+            selectors.forEach { selector ->
 
                 try {
-                    element.toSearchResult()
-                } catch (e: Exception) {
+
+                    val count =
+                        document.select(selector).size
+
                     debug(
                         "MAIN_PAGE",
-                        "Exception parsing item #$index: ${e.message}"
+                        "Selector [$selector] = $count"
                     )
-                    e.printStackTrace()
-                    null
+
+                } catch (e: Exception) {
+
+                    debug(
+                        "MAIN_PAGE",
+                        "Selector error [$selector]: ${e.message}"
+                    )
                 }
             }
 
+            // -------------------------------------------------
+            // PARSE USING CURRENT KNOWN SELECTOR
+            // -------------------------------------------------
+
+            val home =
+                oldElements.mapIndexedNotNull { index, element ->
+
+                    debug(
+                        "MAIN_PAGE",
+                        "Parsing old-selector item #$index"
+                    )
+
+                    try {
+
+                        element.toSearchResult()
+
+                    } catch (e: Exception) {
+
+                        debug(
+                            "MAIN_PAGE",
+                            "Parser error #$index: ${e.message}"
+                        )
+
+                        e.printStackTrace()
+
+                        null
+                    }
+                }
+
             debug(
                 "MAIN_PAGE",
-                "Successfully parsed items: ${home.size}"
+                "Final parsed results: ${home.size}"
             )
 
-            home.forEachIndexed { index, item ->
+            home.forEachIndexed { index, result ->
+
                 debug(
                     "MAIN_PAGE",
-                    "RESULT[$index] = $item"
+                    "RESULT[$index] = $result"
                 )
             }
-
-            debug("MAIN_PAGE", "Creating HomePageResponse")
 
             newHomePageResponse(
                 request.name,
@@ -141,75 +267,119 @@ class Hentaiheaven : MainAPI() {
     private fun Element.toSearchResult(): AnimeSearchResponse? {
 
         debug("SEARCH_RESULT", "----------------------------------------")
-        debug("SEARCH_RESULT", "Parsing Element")
-        debug("SEARCH_RESULT", "Element tag: ${this.tagName()}")
-        debug("SEARCH_RESULT", "Element classes: ${this.classNames()}")
+        debug(
+            "SEARCH_RESULT",
+            "Tag=${this.tagName()} classes=${this.classNames()}"
+        )
 
-        try {
+        return try {
 
-            val firstAnchor = this.selectFirst("a")
+            // -------------------------------------------------
+            // HREF
+            // -------------------------------------------------
+
+            val firstAnchor =
+                this.selectFirst("a")
 
             if (firstAnchor == null) {
+
                 debug(
                     "SEARCH_RESULT",
-                    "No <a> element found -> returning null"
+                    "No <a> found"
                 )
+
                 return null
             }
 
+            val rawHref =
+                firstAnchor.attr("href")
+
             debug(
                 "SEARCH_RESULT",
-                "First href raw: ${firstAnchor.attr("href")}"
+                "Raw href: $rawHref"
             )
 
-            val href = fixUrl(firstAnchor.attr("href"))
+            val href =
+                fixUrl(rawHref)
 
             debug(
                 "SEARCH_RESULT",
                 "Fixed href: $href"
             )
 
+            // -------------------------------------------------
+            // TITLE
+            // -------------------------------------------------
+
             val titleElement =
                 this.selectFirst("h3 a, h5 a")
 
-            val title = titleElement?.text()?.trim()
-                ?: this.selectFirst("a")?.attr("title")
-                ?: run {
-                    debug(
-                        "SEARCH_RESULT",
-                        "No title found -> returning null"
-                    )
-                    return null
-                }
+            debug(
+                "SEARCH_RESULT",
+                "Title element found: ${titleElement != null}"
+            )
+
+            val title =
+                titleElement
+                    ?.text()
+                    ?.trim()
+                    ?: this.selectFirst("a")
+                        ?.attr("title")
+                    ?: run {
+
+                        debug(
+                            "SEARCH_RESULT",
+                            "Title not found"
+                        )
+
+                        return null
+                    }
 
             debug(
                 "SEARCH_RESULT",
                 "Title: $title"
             )
 
-            val imageElement =
+            // -------------------------------------------------
+            // POSTER
+            // -------------------------------------------------
+
+            val image =
                 this.selectFirst("img")
 
             debug(
                 "SEARCH_RESULT",
-                "Image src raw: ${imageElement?.attr("src")}"
+                "Image element found: ${image != null}"
+            )
+
+            val rawPoster =
+                image?.attr("src")
+
+            debug(
+                "SEARCH_RESULT",
+                "Raw poster: $rawPoster"
             )
 
             val posterUrl =
-                fixUrlNull(imageElement?.attr("src"))
+                fixUrlNull(rawPoster)
 
             debug(
                 "SEARCH_RESULT",
-                "Poster URL: $posterUrl"
+                "Fixed poster: $posterUrl"
             )
 
+            // -------------------------------------------------
+            // EPISODE
+            // -------------------------------------------------
+
             val episodeText =
-                this.selectFirst("span.chapter.font-meta a")
-                    ?.text()
+                this.selectFirst(
+                    "span.chapter.font-meta a"
+                )?.text()
 
             debug(
                 "SEARCH_RESULT",
-                "Episode raw: $episodeText"
+                "Episode text: $episodeText"
             )
 
             val episode =
@@ -222,21 +392,29 @@ class Hentaiheaven : MainAPI() {
                 "Episode parsed: $episode"
             )
 
-            val result = newAnimeSearchResponse(
-                title,
-                href,
-                TvType.Anime
-            ) {
-                this.posterUrl = posterUrl
-                addSub(episode)
-            }
+            // -------------------------------------------------
+            // RESULT
+            // -------------------------------------------------
+
+            val result =
+                newAnimeSearchResponse(
+                    title,
+                    href,
+                    TvType.Anime
+                ) {
+
+                    this.posterUrl =
+                        posterUrl
+
+                    addSub(episode)
+                }
 
             debug(
                 "SEARCH_RESULT",
-                "Created result: $result"
+                "Result created successfully"
             )
 
-            return result
+            result
 
         } catch (e: Exception) {
 
@@ -247,7 +425,7 @@ class Hentaiheaven : MainAPI() {
 
             e.printStackTrace()
 
-            return null
+            null
         }
     }
 
@@ -266,34 +444,72 @@ class Hentaiheaven : MainAPI() {
         val link =
             "$mainUrl/?s=$query&post_type=wp-manga"
 
-        debug("SEARCH", "Request URL: $link")
+        debug(
+            "SEARCH",
+            "Request URL: $link"
+        )
 
         return try {
 
-            val response = app.get(link)
+            val response =
+                app.get(link)
 
-            debug("SEARCH", "HTTP request completed")
-            debug("SEARCH", "Response URL: ${response.url}")
-            debug("SEARCH", "Status: ${response.code}")
+            debug(
+                "SEARCH",
+                "HTTP request completed"
+            )
 
-            val document = response.document
+            debug(
+                "SEARCH",
+                "Status: ${response.code}"
+            )
+
+            debug(
+                "SEARCH",
+                "Response URL: ${response.url}"
+            )
+
+            val document =
+                response.document
 
             debug(
                 "SEARCH",
                 "Document title: ${document.title()}"
             )
 
+            // -------------------------------------------------
+            // DEBUG SELECTORS
+            // -------------------------------------------------
+
+            val selectors = listOf(
+                "div.c-tabs-item",
+                "div.c-tabs-item__content",
+                "div.page-listing-item",
+                "article",
+                "div.col-6.col-md-zarat",
+                ".item-summary",
+                ".item-thumb"
+            )
+
+            selectors.forEach { selector ->
+
+                debug(
+                    "SEARCH",
+                    "Selector [$selector] = ${
+                        document.select(selector).size
+                    }"
+                )
+            }
+
             val selector =
                 "div.c-tabs-item > div.c-tabs-item__content"
-
-            debug("SEARCH", "Selector: $selector")
 
             val elements =
                 document.select(selector)
 
             debug(
                 "SEARCH",
-                "Matched elements: ${elements.size}"
+                "Search elements: ${elements.size}"
             )
 
             val results =
@@ -305,12 +521,14 @@ class Hentaiheaven : MainAPI() {
                     )
 
                     try {
+
                         element.toSearchResult()
+
                     } catch (e: Exception) {
 
                         debug(
                             "SEARCH",
-                            "Exception on result #$index: ${e.message}"
+                            "Parser error #$index: ${e.message}"
                         )
 
                         e.printStackTrace()
@@ -321,7 +539,7 @@ class Hentaiheaven : MainAPI() {
 
             debug(
                 "SEARCH",
-                "Successfully parsed results: ${results.size}"
+                "Final search results: ${results.size}"
             )
 
             results.forEachIndexed { index, result ->
@@ -361,15 +579,26 @@ class Hentaiheaven : MainAPI() {
 
         return try {
 
-            debug("LOAD", "Sending HTTP request")
+            val response =
+                app.get(url)
 
-            val response = app.get(url)
+            debug(
+                "LOAD",
+                "HTTP request completed"
+            )
 
-            debug("LOAD", "HTTP request completed")
-            debug("LOAD", "Response URL: ${response.url}")
-            debug("LOAD", "Status: ${response.code}")
+            debug(
+                "LOAD",
+                "Status: ${response.code}"
+            )
 
-            val document = response.document
+            debug(
+                "LOAD",
+                "Response URL: ${response.url}"
+            )
+
+            val document =
+                response.document
 
             debug(
                 "LOAD",
@@ -381,7 +610,9 @@ class Hentaiheaven : MainAPI() {
             // -------------------------------------------------
 
             val titleElement =
-                document.selectFirst("div.post-title h1")
+                document.selectFirst(
+                    "div.post-title h1"
+                )
 
             debug(
                 "LOAD",
@@ -402,7 +633,7 @@ class Hentaiheaven : MainAPI() {
 
                 debug(
                     "LOAD",
-                    "TITLE IS NULL -> returning null"
+                    "Title is null -> returning null"
                 )
 
                 return null
@@ -413,7 +644,9 @@ class Hentaiheaven : MainAPI() {
             // -------------------------------------------------
 
             val posterElements =
-                document.select("div.summary_image img")
+                document.select(
+                    "div.summary_image img"
+                )
 
             debug(
                 "LOAD",
@@ -433,7 +666,9 @@ class Hentaiheaven : MainAPI() {
             // -------------------------------------------------
 
             val genreElements =
-                document.select("div.genres-content > a")
+                document.select(
+                    "div.genres-content > a"
+                )
 
             debug(
                 "LOAD",
@@ -455,7 +690,9 @@ class Hentaiheaven : MainAPI() {
             // -------------------------------------------------
 
             val descriptionElements =
-                document.select("div.description-summary p")
+                document.select(
+                    "div.description-summary p"
+                )
 
             debug(
                 "LOAD",
@@ -482,11 +719,15 @@ class Hentaiheaven : MainAPI() {
             // -------------------------------------------------
 
             val trailerElement =
-                document.selectFirst("a.trailerbutton")
+                document.selectFirst(
+                    "a.trailerbutton"
+                )
 
             debug(
                 "LOAD",
-                "Trailer element found: ${trailerElement != null}"
+                "Trailer element found: ${
+                    trailerElement != null
+                }"
             )
 
             val trailer =
@@ -512,113 +753,96 @@ class Hentaiheaven : MainAPI() {
             )
 
             val episodes =
-                chapterElements.mapIndexedNotNull { index, element ->
-
-                    debug(
-                        "LOAD",
-                        "----------------------------------------"
-                    )
-
-                    debug(
-                        "LOAD",
-                        "Parsing chapter #$index"
-                    )
-
-                    try {
-
-                        val anchor =
-                            element.selectFirst("a")
-
-                        if (anchor == null) {
-
-                            debug(
-                                "LOAD",
-                                "Chapter #$index has no <a> -> skip"
-                            )
-
-                            return@mapIndexedNotNull null
-                        }
-
-                        val name =
-                            anchor.text()
+                chapterElements
+                    .mapIndexedNotNull { index, element ->
 
                         debug(
                             "LOAD",
-                            "Chapter name: $name"
+                            "Parsing chapter #$index"
                         )
 
-                        val image =
-                            fixUrlNull(
-                                anchor
-                                    .selectFirst("img")
-                                    ?.attr("src")
-                            )
+                        try {
 
-                        debug(
-                            "LOAD",
-                            "Chapter image: $image"
-                        )
+                            val anchor =
+                                element.selectFirst("a")
 
-                        val link =
-                            fixUrlNull(
-                                anchor.attr("href")
-                            )
+                            if (anchor == null) {
 
-                        debug(
-                            "LOAD",
-                            "Chapter link: $link"
-                        )
+                                debug(
+                                    "LOAD",
+                                    "No anchor -> skip"
+                                )
 
-                        if (link == null) {
-
-                            debug(
-                                "LOAD",
-                                "Chapter link is null -> skip"
-                            )
-
-                            return@mapIndexedNotNull null
-                        }
-
-                        val episode =
-                            newEpisode(link) {
-
-                                this.name = name
-                                this.posterUrl = image
+                                return@mapIndexedNotNull null
                             }
 
-                        debug(
-                            "LOAD",
-                            "Episode created: $episode"
-                        )
+                            val name =
+                                anchor.text()
 
-                        episode
+                            debug(
+                                "LOAD",
+                                "Chapter name: $name"
+                            )
 
-                    } catch (e: Exception) {
+                            val image =
+                                fixUrlNull(
+                                    anchor
+                                        .selectFirst("img")
+                                        ?.attr("src")
+                                )
 
-                        debug(
-                            "LOAD",
-                            "Exception parsing chapter #$index: ${e.message}"
-                        )
+                            debug(
+                                "LOAD",
+                                "Chapter image: $image"
+                            )
 
-                        e.printStackTrace()
+                            val link =
+                                fixUrlNull(
+                                    anchor.attr("href")
+                                )
 
-                        null
+                            debug(
+                                "LOAD",
+                                "Chapter link: $link"
+                            )
+
+                            if (link == null) {
+
+                                debug(
+                                    "LOAD",
+                                    "Link null -> skip"
+                                )
+
+                                return@mapIndexedNotNull null
+                            }
+
+                            newEpisode(link) {
+
+                                this.name =
+                                    name
+
+                                this.posterUrl =
+                                    image
+                            }
+
+                        } catch (e: Exception) {
+
+                            debug(
+                                "LOAD",
+                                "Chapter error: ${e.message}"
+                            )
+
+                            e.printStackTrace()
+
+                            null
+                        }
                     }
-                }
-                .reversed()
+                    .reversed()
 
             debug(
                 "LOAD",
                 "Final episode count: ${episodes.size}"
             )
-
-            episodes.forEachIndexed { index, episode ->
-
-                debug(
-                    "LOAD",
-                    "EPISODE[$index] = $episode"
-                )
-            }
 
             // -------------------------------------------------
             // RECOMMENDATIONS
@@ -631,53 +855,45 @@ class Hentaiheaven : MainAPI() {
 
             debug(
                 "LOAD",
-                "Recommendation elements: ${recommendationElements.size}"
+                "Recommendation elements: ${
+                    recommendationElements.size
+                }"
             )
 
             val recommendations =
-                recommendationElements.mapIndexedNotNull { index, element ->
-
-                    debug(
-                        "LOAD",
-                        "Parsing recommendation #$index"
-                    )
-
-                    try {
-                        element.toSearchResult()
-                    } catch (e: Exception) {
+                recommendationElements
+                    .mapIndexedNotNull { index, element ->
 
                         debug(
                             "LOAD",
-                            "Exception parsing recommendation #$index: ${e.message}"
+                            "Parsing recommendation #$index"
                         )
 
-                        e.printStackTrace()
+                        try {
 
-                        null
+                            element.toSearchResult()
+
+                        } catch (e: Exception) {
+
+                            debug(
+                                "LOAD",
+                                "Recommendation error: ${e.message}"
+                            )
+
+                            null
+                        }
                     }
-                }
 
             debug(
                 "LOAD",
-                "Successfully parsed recommendations: ${recommendations.size}"
+                "Final recommendations: ${
+                    recommendations.size
+                }"
             )
 
-            recommendations.forEachIndexed { index, recommendation ->
-
-                debug(
-                    "LOAD",
-                    "RECOMMENDATION[$index] = $recommendation"
-                )
-            }
-
             // -------------------------------------------------
-            // CREATE LOAD RESPONSE
+            // LOAD RESPONSE
             // -------------------------------------------------
-
-            debug(
-                "LOAD",
-                "Creating newAnimeLoadResponse()"
-            )
 
             val result =
                 newAnimeLoadResponse(
@@ -686,33 +902,34 @@ class Hentaiheaven : MainAPI() {
                     TvType.NSFW
                 ) {
 
-                    engName = title
+                    engName =
+                        title
 
-                    posterUrl = poster
+                    posterUrl =
+                        poster
 
                     addEpisodes(
                         DubStatus.Subbed,
                         episodes
                     )
 
-                    plot = description
+                    plot =
+                        description
 
-                    this.tags = tags
+                    this.tags =
+                        tags
 
                     this.recommendations =
                         recommendations
 
-                    addTrailer(trailer)
+                    addTrailer(
+                        trailer
+                    )
                 }
 
             debug(
                 "LOAD",
-                "LoadResponse successfully created"
-            )
-
-            debug(
-                "LOAD",
-                "Result: $result"
+                "LoadResponse created successfully"
             )
 
             result
@@ -732,8 +949,7 @@ class Hentaiheaven : MainAPI() {
 
     // =========================================================
     // LOAD LINKS
-    //
-    // SENGAJA TIDAK DIUBAH
+    // SAMA SEPERTI KODE AWAL
     // =========================================================
 
     override suspend fun loadLinks(
@@ -744,68 +960,135 @@ class Hentaiheaven : MainAPI() {
     ): Boolean {
 
         val doc = app.get(data).document
-        val meta = doc.selectFirst("meta[itemprop=thumbnailUrl]")?.attr("content")
-            ?.substringAfter("/hh/")?.substringBefore("/") ?: return false
 
-        val iframe = doc.select("div.player_logic_item iframe").attr("src")
+        val meta =
+            doc.selectFirst(
+                "meta[itemprop=thumbnailUrl]"
+            )?.attr("content")
+                ?.substringAfter("/hh/")
+                ?.substringBefore("/")
+                ?: return false
 
-        val dataParam = Regex("[?&]data=([^&]+)").find(iframe)?.groupValues?.getOrNull(1)
-        if (dataParam == null) return false
+        val iframe =
+            doc.select(
+                "div.player_logic_item iframe"
+            ).attr("src")
+
+        val dataParam =
+            Regex("[?&]data=([^&]+)")
+                .find(iframe)
+                ?.groupValues
+                ?.getOrNull(1)
+
+        if (dataParam == null)
+            return false
 
         val decoded = try {
-            val raw = Base64.getDecoder().decode(dataParam)
+
+            val raw =
+                Base64.getDecoder()
+                    .decode(dataParam)
+
             String(raw)
+
         } catch (e: Exception) {
-            println("Failed to decode Base64: ${e.message}")
+
+            println(
+                "Failed to decode Base64: ${e.message}"
+            )
+
             return false
         }
 
-        val parts = decoded.split(":|::|:")
+        val parts =
+            decoded.split(":|::|:")
+
         if (parts.size != 2) {
-            println("Unexpected format after decoding: $decoded")
+
+            println(
+                "Unexpected format after decoding: $decoded"
+            )
+
             return false
         }
 
-        val en = parts[0]
-        val iv = Base64.getEncoder().encodeToString(parts[1].toByteArray())
-        val body = MultipartBody.Builder()
-            .setType(MultipartBody.FORM)
-            .addFormDataPart("action", "zarat_get_data_player_ajax")
-            .addFormDataPart("a", en)
-            .addFormDataPart("b", iv)
-            .build()
+        val en =
+            parts[0]
 
-        val fycfUrl = BuildConfig.FYCF_ENDPOINT
-        val FYCF_API = BuildConfig.FYCF_API
+        val iv =
+            Base64.getEncoder()
+                .encodeToString(
+                    parts[1].toByteArray()
+                )
 
-        val response = app.post(
-            "$fycfUrl/?token=$FYCF_API&url=$mainUrl/wp-content/plugins/player-logic/api.php",
-            requestBody = body,
-            timeout = 60_000
-        ).parsedSafe<Response>()
+        val body =
+            MultipartBody.Builder()
+                .setType(MultipartBody.FORM)
+                .addFormDataPart(
+                    "action",
+                    "zarat_get_data_player_ajax"
+                )
+                .addFormDataPart(
+                    "a",
+                    en
+                )
+                .addFormDataPart(
+                    "b",
+                    iv
+                )
+                .build()
+
+        val fycfUrl =
+            BuildConfig.FYCF_ENDPOINT
+
+        val FYCF_API =
+            BuildConfig.FYCF_API
+
+        val response =
+            app.post(
+                "$fycfUrl/?token=$FYCF_API&url=$mainUrl/wp-content/plugins/player-logic/api.php",
+                requestBody = body,
+                timeout = 60_000
+            ).parsedSafe<Response>()
 
         if (response == null) {
-            println("Response is null or failed to parse")
+
+            println(
+                "Response is null or failed to parse"
+            )
+
             return false
         }
 
-        val sources = response.data?.sources
+        val sources =
+            response.data?.sources
 
         if (sources.isNullOrEmpty()) {
-            println("No sources found in response $response")
+
+            println(
+                "No sources found in response $response"
+            )
+
             return false
         }
 
         sources.forEach { res ->
 
-            val src = res.src
+            val src =
+                res.src
 
             if (src == null) {
-                println("Source is null, skipping")
+
+                println(
+                    "Source is null, skipping"
+                )
+
                 return@forEach
             }
 
-            println("Response src: $src")
+            println(
+                "Response src: $src"
+            )
 
             callback.invoke(
                 newExtractorLink(
@@ -831,7 +1114,8 @@ class Hentaiheaven : MainAPI() {
 
     data class Data(
         @JsonProperty("sources")
-        val sources: ArrayList<Sources>? = arrayListOf(),
+        val sources: ArrayList<Sources>? =
+            arrayListOf(),
     )
 
     data class Sources(
