@@ -8,10 +8,10 @@ import okhttp3.MultipartBody
 import org.jsoup.nodes.Element
 import java.util.Base64
 
-class SomeSite : MainAPI() {
+class Hentaiheaven : MainAPI() {
 
     override var mainUrl = "https://hentaihaven.xxx"
-    override var name = "HentaiHeaven"
+    override var name = "Hentaiheaven"
     override val hasMainPage = true
     override var lang = "en"
     override val hasDownloadSupport = true
