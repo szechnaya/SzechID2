@@ -61,6 +61,11 @@ jobs:
           cp build/plugins.json $GITHUB_WORKSPACE/dev_builds
           
 
+      - name: Fix plugins.json
+        run: |
+          sed -i 's#SzechID2/builds#SzechID2/dev/builds#g' "$GITHUB_WORKSPACE/builds/plugins.json"
+      
+      
       - name: Push builds
         run: |
           cd $GITHUB_WORKSPACE/dev_builds
