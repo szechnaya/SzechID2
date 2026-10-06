@@ -26,52 +26,53 @@ class Hentaiheaven : MainAPI() {
         page: Int,
         request: MainPageRequest
     ): HomePageResponse {
-        val basePath = request.data
-    
         val url = if (page == 1) {
-            "$mainUrl$basePath"
+            "$mainUrl${request.data}"
         } else {
-            if (basePath.contains("?")) {
-                "$mainUrl$basePath&page=$page"
+            if (request.data.contains("?")) {
+                "$mainUrl${request.data}&page=$page"
             } else {
-                "$mainUrl$basePath?page=$page"
+                "$mainUrl${request.data}?page=$page"
             }
         }
     
         val html = app.get(url).text
     
+        val flight = Regex(
+            """self\.__next_f\.push\((.*?)\)</script>""",
+            setOf(RegexOption.DOT_MATCHES_ALL)
+        )
+            .findAll(html)
+            .joinToString("\n") { it.groupValues[1] }
+    
+        println("[$name][MAIN] HTML size = ${html.length}")
+        println("[$name][MAIN] Flight size = ${flight.length}")
+        println("[$name][MAIN] Flight matches = ${Regex("""self\.__next_f\.push""").findAll(html).count()}")
+    
         val ids = Regex(
             """"id":(\d+)"""
-        ).findAll(html)
+        ).findAll(flight)
             .map { it.groupValues[1] }
             .toList()
     
         val slugs = Regex(
-            """"slug":"([^"]+)""""
-        ).findAll(html)
+            """"slug":"([^"]+)"""
+        ).findAll(flight)
             .map { it.groupValues[1] }
             .toList()
     
         val titles = Regex(
-            """"title":\{"rendered":"([^"]+)""""
-        ).findAll(html)
-            .map {
-                it.groupValues[1]
-                    .replace("\\/", "/")
-                    .replace("\\u0026", "&")
-            }
+            """"title":\{"rendered":"([^"]+)"""
+        ).findAll(flight)
+            .map { it.groupValues[1] }
             .toList()
     
         val thumbnails = Regex(
-            """"vraven_remote_thumbnail":"([^"]+)""""
-        ).findAll(html)
-            .map {
-                it.groupValues[1]
-                    .replace("\\/", "/")
-            }
+            """"vraven_remote_thumbnail":"([^"]+)"""
+        ).findAll(flight)
+            .map { it.groupValues[1] }
             .toList()
     
-        println("[$name][MAIN] HTML size = ${html.length}")
         println("[$name][MAIN] IDs = ${ids.size}")
         println("[$name][MAIN] Slugs = ${slugs.size}")
         println("[$name][MAIN] Titles = ${titles.size}")
@@ -82,7 +83,7 @@ class Hentaiheaven : MainAPI() {
             titles.size
         )
     
-        val home = (0 until count).mapNotNull { index ->
+        val results = (0 until count).map { index ->
             val slug = slugs[index]
             val title = titles[index]
     
@@ -97,11 +98,11 @@ class Hentaiheaven : MainAPI() {
             )
         }
     
-        println("[$name][MAIN] Final results = ${home.size}")
+        println("[$name][MAIN] Final results = ${results.size}")
     
         return newHomePageResponse(
             request.name,
-            home
+            results
         )
     }
 
