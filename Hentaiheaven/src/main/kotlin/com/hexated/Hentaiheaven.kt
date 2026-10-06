@@ -25,12 +25,12 @@ class Hentaiheaven : MainAPI() {
         request: MainPageRequest
     ): HomePageResponse {
         val url = if (page == 1) {
-            "$mainUrl/watch${request.data}"
+            "$mainUrl/watch/${request.data}"
         } else {
             if (request.data.contains("?")) {
-                "$mainUrl/watch/page/$page${request.data}"
+                "$mainUrl/watch/page/$page/${request.data}"
             } else {
-                "$mainUrl/watch/page/$page${request.data}"
+                "$mainUrl/watch/page/$page/${request.data}"
             }
         }
 
