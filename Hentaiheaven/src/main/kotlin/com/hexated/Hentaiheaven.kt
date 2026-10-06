@@ -13,10 +13,11 @@ class Hentaiheaven : MainAPI() {
     override val supportedTypes = setOf(TvType.NSFW)
 
     override val mainPage = mainPageOf(
-        "/watch/" to "New",
-        "/watch/?sort=views" to "Most Views",
-        "/watch/?sort=rating" to "Rating",
-        "/watch/?sort=az" to "A-Z"
+        "?sort=new" to "New",
+        "?sort=views" to "Most Views",
+        "?sort=rating" to "Rating",
+        "?sort=az" to "A-Z",
+        "?sort=latest" to "Latest"
     )
 
     override suspend fun getMainPage(
@@ -24,12 +25,12 @@ class Hentaiheaven : MainAPI() {
         request: MainPageRequest
     ): HomePageResponse {
         val url = if (page == 1) {
-            "$mainUrl${request.data}"
+            "$mainUrl/watch${request.data}"
         } else {
             if (request.data.contains("?")) {
-                "$mainUrl${request.data}&page=$page"
+                "$mainUrl/watch/page/$page${request.data}"
             } else {
-                "$mainUrl${request.data}?page=$page"
+                "$mainUrl/watch/page/$page${request.data}"
             }
         }
 
@@ -94,6 +95,7 @@ class Hentaiheaven : MainAPI() {
         )
     }
 
+    /*
     override suspend fun load(url: String): LoadResponse? {
         val slug = url
             .substringAfter("/watch/")
@@ -152,6 +154,76 @@ class Hentaiheaven : MainAPI() {
             )
         }
 
+        return newAnimeLoadResponse(
+            title,
+            url,
+            TvType.NSFW
+        ) {
+            addEpisodes(
+                DubStatus.Subbed,
+                episodes
+            )
+        }
+    }*/
+    
+        override suspend fun load(url: String): LoadResponse? {
+        val slug = url
+            .substringAfter("/watch/")
+            .trimEnd('/')
+            .substringBefore("/episode-")
+    
+        val html = app.get(url).text
+    
+        val title = Regex(
+            """"title":\{"rendered":"([^"]+)"""
+        )
+            .find(html)
+            ?.groupValues
+            ?.getOrNull(1)
+            ?.replace("\\\"", "\"")
+            ?: slug
+                .replace("-", " ")
+                .replaceFirstChar { it.uppercase() }
+    
+        val episodes = mutableListOf<Episode>()
+    
+        for (episodeNumber in 1..100) {
+            val episodeUrl =
+                "$mainUrl/watch/$slug/episode-$episodeNumber/"
+    
+            val response = app.get(
+                episodeUrl,
+                timeout = 10
+            )
+    
+            if (!response.isSuccessful) {
+                break
+            }
+    
+            if (!response.url.toString().contains(
+                    "/watch/$slug/episode-$episodeNumber/"
+                )
+            ) {
+                break
+            }
+    
+            episodes.add(
+                newEpisode(episodeUrl) {
+                    name = "Episode $episodeNumber"
+                    episode = episodeNumber
+                }
+            )
+        }
+    
+        if (episodes.isEmpty()) {
+            episodes.add(
+                newEpisode(url) {
+                    name = "Episode 1"
+                    episode = 1
+                }
+            )
+        }
+    
         return newAnimeLoadResponse(
             title,
             url,
